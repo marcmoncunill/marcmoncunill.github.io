@@ -13,7 +13,7 @@ export function checkPublication(){
   if(item.isSymbolicLink())errors.push(`Symbolic link: ${slash(path.relative(root,absolute))}`);
   else if(item.isDirectory())walk(absolute);else files.push(absolute);
  }}
- walk(dist);files.sort();
+ walk(dist);files.sort((a,b)=>{const x=slash(path.relative(dist,a)),y=slash(path.relative(dist,b));return x<y?-1:x>y?1:0;});
  const paths=new Set(files.map(file=>slash(path.relative(dist,file))));
  const digest=crypto.createHash('sha256');let bytes=0,references=0;
  function checkRef(from,value){

@@ -15,11 +15,15 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
+          package-manager-cache: false
       - name: Validate public source and static assets
         run: node scripts/check-publication.mjs
       - uses: actions/configure-pages@v5
