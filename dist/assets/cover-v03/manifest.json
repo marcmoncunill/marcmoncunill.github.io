@@ -1,0 +1,22 @@
+{
+  "directory": "assets/cover-v03/",
+  "frames": 240,
+  "width": 910,
+  "height": 941,
+  "fps": 30,
+  "duration": 8,
+  "sourceResolution": [
+    1920,
+    1080
+  ],
+  "sourceCrop": [
+    505,
+    85,
+    1415,
+    1026
+  ],
+  "foregroundEnd": 70.25442857008713,
+  "bytes": 9566890,
+  "background": "#f6f5f0",
+  "ink": "#c73825"
+}

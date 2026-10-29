@@ -1,0 +1,14 @@
+.glass-cursor{position:fixed;left:0;top:0;width:0;height:0;z-index:2147483647;pointer-events:none!important;opacity:0;transition:opacity .16s ease}
+.glass-cursor.is-visible{opacity:1}
+.glass-cursor-optics{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
+.glass-cursor-lens{position:absolute;left:0;top:0;width:22px;height:22px;display:block;transform:translate(-50%,-50%) rotate(var(--glass-angle,0deg)) scale(var(--glass-stretch,1),var(--glass-squash,1));border:1px solid transparent;border-radius:50%;background:linear-gradient(145deg,rgba(255,255,255,.055),transparent 58%,rgba(37,37,33,.025));-webkit-backdrop-filter:url(#glass-cursor-distort) saturate(1.18);backdrop-filter:url(#glass-cursor-distort) saturate(1.18);box-shadow:inset .7px 1px 1.8px #ffffff66,inset -.7px -1px 2px #2525211f;transition:width .18s cubic-bezier(.2,.7,.2,1),height .18s cubic-bezier(.2,.7,.2,1),border-radius .18s,background .18s,box-shadow .18s}
+.glass-cursor-lens::before{content:'';position:absolute;inset:0;border-radius:inherit;box-shadow:0 2px 5px #2525214d,0 5px 9px #25252114;transform:rotate(calc(-1 * var(--glass-angle,0deg)));pointer-events:none;transition:box-shadow .18s}
+.glass-cursor-lens::after{content:'';position:absolute;inset:0;border-radius:inherit;background:radial-gradient(ellipse at 26% 17%,rgba(255,255,255,.46),rgba(255,255,255,.1) 20%,transparent 49%);transform:rotate(calc(-1 * var(--glass-angle,0deg)));pointer-events:none}
+.glass-cursor[data-mode="link"] .glass-cursor-lens{width:27px;height:27px}
+.glass-cursor[data-mode="image"] .glass-cursor-lens{width:30px;height:30px}
+.glass-cursor.is-pressed .glass-cursor-lens{width:18px;height:16px;border-radius:46% 54% 48% 52%;box-shadow:inset .7px 1px 2px #ffffff66,inset -.7px -1px 2px #25252124}
+.glass-cursor.is-pressed .glass-cursor-lens::before{box-shadow:0 1px 3px #25252138}
+@media(hover:hover) and (pointer:fine){html.glass-cursor-active,html.glass-cursor-active *{cursor:none!important}html.glass-cursor-active :is(input,textarea,[contenteditable]:not([contenteditable="false"])){cursor:text!important}html.glass-cursor-active :is(select,option,iframe,embed,object){cursor:auto!important}}
+@media(prefers-reduced-motion:reduce){.glass-cursor,.glass-cursor *{transition:none!important}}
+@media(hover:none),(pointer:coarse),(forced-colors:active){.glass-cursor{display:none!important}}
+@media(forced-colors:active){html.glass-cursor-active,html.glass-cursor-active *{cursor:auto!important}}

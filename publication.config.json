@@ -1,0 +1,9 @@
+{
+  "repository": "marcmoncunill/marcmoncunill.github.io",
+  "remote": "https://github.com/marcmoncunill/marcmoncunill.github.io.git",
+  "publicUrl": "https://marcmoncunill.github.io/",
+  "workingBranch": "work",
+  "publicBranch": "main",
+  "directory": "dist",
+  "requiredHumanConfirmation": "Publica els canvis"
+}

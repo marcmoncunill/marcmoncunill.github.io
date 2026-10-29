@@ -1,0 +1,19 @@
+{
+  "name": "marc-moncunill-portfolio",
+  "version": "29.0.0",
+  "private": true,
+  "description": "Independent portfolio with selected Compacta cover and high quality V03 45 degree faucet scroll sequence",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "dev": "node scripts/serve.mjs",
+    "check": "node scripts/check-publication.mjs",
+    "publication": "node scripts/publication.mjs",
+    "setup:publication": "git config core.hooksPath .githooks"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

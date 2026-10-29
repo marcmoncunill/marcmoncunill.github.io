@@ -1,0 +1,31 @@
+/* Selected Compacta cover. Existing gallery, case studies and cursor retain their styles. */
+.cover-scene{position:relative;height:550svh;background:#f6f5f0;color:#c73825}
+.cover-stage{position:sticky;top:0;height:100svh;min-height:0;overflow:clip;isolation:isolate;--reveal:1}
+.cover-scene.is-static{height:100svh}
+.cover-art{position:absolute;z-index:1;left:min(57.5%,calc(74% - min(24%,calc(24svh * var(--cover-ratio)))));top:50%;width:min(96%,calc(96svh * var(--cover-ratio)));height:auto;aspect-ratio:var(--cover-ratio);transform:translate(-50%,-50%);pointer-events:none}
+.cover-art img{display:block;width:100%;height:100%;max-width:none;object-fit:contain}
+.cover-art-front{z-index:3;clip-path:inset(0 var(--front-cut) 0 0)}
+.cover-name{position:absolute;inset:0;margin:0;font-family:Bahnschrift,'Arial Narrow',Arial,sans-serif;font-weight:600;font-stretch:semi-condensed;letter-spacing:-.045em;line-height:.83;pointer-events:none}
+.cover-name span{position:absolute;display:block;white-space:nowrap;font-size:24vw;line-height:.83}
+.cover-first{z-index:0;left:2%;top:4%}
+.cover-last{z-index:2;right:2%;bottom:3%;padding-top:.16em;clip-path:inset(calc((1 - var(--reveal))*100%) 0 0 0)}
+.cover-control{position:absolute;z-index:5;bottom:22px;left:2%;display:grid;place-items:center;width:36px;height:36px;padding:10px;border:0;background:transparent;color:#c73825;opacity:.65;transition:opacity .18s}
+.cover-control:hover,.cover-control:focus-visible{opacity:1}
+.cover-control svg{width:14px;height:14px;display:block;fill:currentColor}
+.cover-control .control-play{display:none}
+.cover-scene.is-static .cover-control .control-play{display:block}
+.cover-scene.is-static .cover-control .control-pause{display:none}
+.site-header.is-cover-mode{justify-content:flex-end;padding:28px 2%;height:auto;background:transparent!important;border-color:transparent!important;backdrop-filter:none!important}
+.site-header.is-cover-mode .wordmark{display:none}
+.site-header.is-cover-mode nav{background:transparent;opacity:var(--cover-nav-opacity,0)}
+.site-header.is-cover-nav-hidden nav{visibility:hidden;pointer-events:none}
+.site-header.is-cover-mode nav:focus-within{opacity:1}
+@media(max-width:700px){
+ .cover-scene{height:240svh}
+ .cover-art{width:96%}
+ .cover-first{left:4%;top:13%}
+ .cover-last{right:4%;bottom:14%}
+ .cover-control{left:4%;bottom:22px}
+ .site-header.is-cover-mode{padding:25px 4%}
+}
+@media(prefers-reduced-motion:reduce){.cover-control{transition:none}}

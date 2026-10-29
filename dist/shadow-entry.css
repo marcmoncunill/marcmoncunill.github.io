@@ -1,0 +1,20 @@
+@import url('components/shadow-set-v05/shadow.css');
+
+/* Only the Shadow Set opening changes. Header, body type and case content stay native. */
+.project.shadow-case{padding-top:94px}
+.shadow-case .shadow-hero{height:calc(100svh - 94px);color:inherit;margin-bottom:38px}
+.shadow-case .shadow-entry-back{display:flex;justify-content:center;align-items:baseline;gap:24px;font-size:13px;line-height:1.4;margin:0 0 28px}
+.shadow-case .shadow-entry-back span{font-size:10px}
+.shadow-case .project-category{text-transform:uppercase}
+.shadow-case .shadow-entry-back a:hover{text-decoration:underline;text-underline-offset:4px}
+.shadow-case .shadow-copy{background:transparent}
+.shadow-case .shadow-hero[data-entry-state="loading"] .shadow-static{visibility:hidden;opacity:0}
+.shadow-case .shadow-hero[data-entry-state="loading"] .shadow-fallback{visibility:hidden}
+.shadow-case .shadow-hero[data-entry-state="fallback"] .shadow-static{visibility:visible;opacity:1}
+.shadow-case .shadow-stage{opacity:0;transition:opacity .18s ease}
+.shadow-case .shadow-hero[data-entry-state="ready"][data-ready="true"] .shadow-stage{opacity:1}
+.shadow-case .shadow-hero [hidden]{display:none!important}
+.shadow-case .shadow-controls{right:auto;width:max-content}
+@media(max-width:900px){.project.shadow-case{padding-top:80px}.shadow-case .shadow-hero{height:calc(100svh - 80px)}}
+@media(max-width:600px){.project.shadow-case{padding-top:75px}.shadow-case .shadow-hero{height:calc(100svh - 75px)}.shadow-case .shadow-entry-back{margin-bottom:24px}}
+@media(prefers-reduced-motion:reduce){.shadow-case .shadow-stage{transition:none}}

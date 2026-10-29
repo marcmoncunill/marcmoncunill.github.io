@@ -1,0 +1,5 @@
+@echo off
+setlocal
+cd /d "%~dp0"
+powershell.exe -NoProfile -Command "$ErrorActionPreference='Stop'; $previewUrl='http://127.0.0.1:8769/?motion=on'; $ready=$false; try { $response=Invoke-WebRequest -Uri $previewUrl -UseBasicParsing -TimeoutSec 1; $ready=$response.StatusCode -eq 200 -and $response.Content -match 'Marc Moncunill' } catch {}; if(-not $ready) { $env:PORT='8769'; $nodeCommand=Get-Command node -ErrorAction Stop; Start-Process -FilePath $nodeCommand.Source -ArgumentList 'scripts/serve.mjs' -WorkingDirectory (Get-Location).Path -WindowStyle Hidden }; for($attempt=0; $attempt -lt 30 -and -not $ready; $attempt++) { try { $response=Invoke-WebRequest -Uri $previewUrl -UseBasicParsing -TimeoutSec 1; $ready=$response.StatusCode -eq 200 -and $response.Content -match 'Marc Moncunill' } catch {}; if(-not $ready) { Start-Sleep -Milliseconds 200 } }; if($ready) { Start-Process $previewUrl } else { Write-Host 'No es pot iniciar el portafoli. Comprova Node.js i el port 8769.'; exit 1 }"
+if errorlevel 1 pause
