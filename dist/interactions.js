@@ -153,13 +153,14 @@ function render(){
   const view=isPublication?'publication':p?p.id:'home';
   if(hasRendered&&view===currentView){scrollToDestination(true);markNavigation();scheduleScroll();return;}
   window.portfolioCover?.unmount();
+  window.portfolioFeatured?.unmount();
   window.portfolioShadowEntry?.unmount();
   mirrorMotionCleanup?.();mirrorMotionCleanup=null;
   routeAnimation?.cancel();
   document.body.classList.toggle('project-page',!!p||isPublication);
   main.innerHTML=isPublication?publication():p?(p.id==='a3-collection'?a3():projectDetail(p,productProjects.indexOf(p))):home();
   document.title=isPublication?`${publicationTitle} — Marc Moncunill`:p?`${p.title} — Marc Moncunill`:'Marc Moncunill — Product Design Portfolio';
-  reserveImageDimensions();setupGravity();window.portfolioCover?.mount();
+  reserveImageDimensions();setupGravity();window.portfolioCover?.mount();window.portfolioFeatured?.mount();
   if(p?.id==='mirall-fusta')setupMirrorMotion();
   if(p?.id==='the-shadow-set'){showShadowPage(shadowPage);window.portfolioShadowEntry?.mount();}
   if(isPublication)showPublicationPage(publicationPage);

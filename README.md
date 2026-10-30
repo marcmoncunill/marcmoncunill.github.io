@@ -12,6 +12,8 @@ La web recorda l’elecció d’activar o aturar la portada en aquest navegador,
 
 No cal instal·lar dependències. Tot el codi i tots els recursos necessaris són a `dist/`.
 
+L’índex incorpora EV Charger com a projecte protagonista sobre negre, després de la portada de l’aixeta. Les altres imatges es mostren senceres, amb files adaptades a les seves proporcions i el hover blanc original. `?ev-motion=on` activa explícitament el moviment subtil d’EV per revisar-lo; el seu botó de pausa és independent de la portada i es respecta el moviment reduït per defecte.
+
 ## Versions i publicació
 
 Treballa i previsualitza localment a `work`. La branca `main` es reserva per a les versions aprovades; GitHub Actions en publica només `dist/` a GitHub Pages.
