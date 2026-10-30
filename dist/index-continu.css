@@ -1,0 +1,24 @@
+/* Local index trial: original imagery and white hover, with a continuous frame. */
+.work,.experimentation{position:relative;padding:0;scroll-margin-top:-6px}
+.work>.section-line,.experimentation>.section-line{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden; /* taste-skill-ignore: accessible hidden text, never a visible divider. */
+  clip-path:inset(50%);white-space:nowrap;
+}
+.project-grid,.experiment-grid{gap:0}
+.work .project-card,.experimentation .project-card,
+.work .media,.experimentation .media{border-radius:0}
+.work .media,.experimentation .media{background:transparent}
+.work .project-card:focus-visible,.experimentation .project-card:focus-visible{
+  outline-offset:-4px;z-index:1;
+}
+/* Tiles stay joined during scrolling, including with reduced motion. */
+#work .project-card.reveal,#experimentacio .project-card.reveal{opacity:1;transform:none}
+@media(min-width:601px){
+  .project-grid>.card-mirall .media{height:100%;aspect-ratio:auto}
+}
+@media(max-width:900px){
+  .work,.experimentation{scroll-margin-top:-20px}
+}
+@media(max-width:600px){
+  .work,.experimentation{scroll-margin-top:-10px}
+}
