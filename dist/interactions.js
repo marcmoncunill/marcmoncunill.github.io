@@ -121,6 +121,30 @@ function updateScroll(){
 
 function scheduleScroll(){if(!scrollScheduled){scrollScheduled=true;requestAnimationFrame(updateScroll);}}
 
+// A small reduction in wheel travel inside cases, without adding momentum.
+// Touch, keyboard, zoom, horizontal gestures and nested scrollers stay native.
+const projectWheelPointer=matchMedia('(hover: hover) and (pointer: fine)');
+function slowProjectWheel(event){
+  if(!document.body.classList.contains('project-page')||!projectWheelPointer.matches||
+    !event.cancelable||event.defaultPrevented||event.ctrlKey||event.metaKey||
+    event.altKey||event.shiftKey||!event.deltaY||Math.abs(event.deltaX)>Math.abs(event.deltaY))return;
+  const target=event.target instanceof Element?event.target:null;
+  if(!target||document.querySelector('dialog[open]')||
+    target.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"])'))return;
+  for(let element=target;element&&element!==document.body;element=element.parentElement){
+    if(element.scrollHeight>element.clientHeight+1&&
+      /^(auto|scroll|overlay)$/.test(getComputedStyle(element).overflowY))return;
+  }
+  const unit=event.deltaMode===1?16:event.deltaMode===2?innerHeight:1;
+  const limit=Math.max(0,document.documentElement.scrollHeight-innerHeight);
+  const next=Math.max(0,Math.min(limit,scrollY+event.deltaY*unit*.82));
+  if(next===scrollY)return;
+  event.preventDefault();
+  // Explicit instant movement also avoids extra motion under reduced motion.
+  window.scrollTo({top:next,left:scrollX,behavior:'instant'});
+}
+window.addEventListener('wheel',slowProjectWheel,{passive:false});
+
 function render(){
   const hash=location.hash;
   const id=hash.match(/^#\/(?:project|experimentacio)\/([^/]+)/)?.[1];
