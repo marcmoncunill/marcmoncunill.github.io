@@ -2,8 +2,8 @@
 .ev-feature{height:66svh;min-height:420px;max-height:740px;position:relative;overflow:clip;background:#080808;color:#f6f5f0;isolation:isolate}
 .ev-hit{display:grid;grid-template-columns:64% 36%;grid-template-rows:minmax(0,1fr);align-items:center;height:100%;padding:94px 3.5vw 34px 0;outline-offset:-8px}
 .ev-hit:focus-visible{outline-color:#f6f5f0}
-.ev-visual{position:relative;width:100%;height:100%;min-height:0;margin-left:0;pointer-events:none;transform:translate3d(var(--ev-x,0px),calc(var(--ev-y,0px) + var(--ev-scroll,0px)),0);transition:transform 300ms cubic-bezier(.2,.7,.2,1)}
-.ev-visual img{display:block;width:100%;height:100%;max-width:none;object-fit:contain;mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 92%,transparent);mask-composite:intersect} /* taste-skill-ignore: neutral mask only at the original photograph's edges to join its backdrop to the black stage. */
+.ev-visual{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:0;margin-left:0;pointer-events:none;transform:translate3d(var(--ev-x,0px),calc(var(--ev-y,0px) + var(--ev-scroll,0px)),0);transition:transform 300ms cubic-bezier(.2,.7,.2,1)}
+.ev-visual img{display:block;width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;mask-image:linear-gradient(to right,transparent,#000 12%,#000 88%,transparent),linear-gradient(to bottom,transparent,#000 12%,#000 92%,transparent);mask-composite:intersect} /* taste-skill-ignore: neutral mask only at the original photograph's edges to join its backdrop to the black stage. */
 .ev-title{position:relative;z-index:1;transform:translateY(var(--ev-copy,0px));transition:transform 300ms cubic-bezier(.2,.7,.2,1)}
 .ev-title h2{margin:0;color:#f6f5f0;font-size:clamp(56px,min(8.1vw,15svh),156px);font-weight:400;letter-spacing:-.065em;line-height:.89}
 .ev-arrow{display:inline-block;margin-top:32px;font-size:48px;line-height:1;transition:transform 220ms cubic-bezier(.2,.7,.2,1)}
