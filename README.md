@@ -14,6 +14,8 @@ No cal instal·lar dependències. Tot el codi i tots els recursos necessaris só
 
 L’índex incorpora EV Charger com a projecte protagonista sobre negre, després de la portada de l’aixeta. Les altres imatges es mostren senceres, amb files adaptades a les seves proporcions i el hover blanc original. `?ev-motion=on` activa explícitament el moviment subtil d’EV per revisar-lo; el seu botó de pausa és independent de la portada i es respecta el moviment reduït per defecte.
 
+El detall `#/project/ev-charger` incorpora la immersió Amazon Dock corregida v04: 360 fotogrames controlats amb scroll natiu reversible i transició al blanc abans de la introducció i galeria originals. Carrega una sola resolució per visita, amb memòria limitada i neteja en sortir. Amb moviment reduït mostra el frontal estàtic i permet activar la immersió voluntàriament; aquest control és independent dels altres dos. «Continua al projecte» permet saltar la seqüència i el vídeo v04 queda disponible com a alternativa estàtica.
+
 ## Versions i publicació
 
 Treballa i previsualitza localment a `work`. La branca `main` es reserva per a les versions aprovades; GitHub Actions en publica només `dist/` a GitHub Pages.

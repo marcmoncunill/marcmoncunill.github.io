@@ -125,6 +125,7 @@ function scheduleScroll(){if(!scrollScheduled){scrollScheduled=true;requestAnima
 // Touch, keyboard, zoom, horizontal gestures and nested scrollers stay native.
 const projectWheelPointer=matchMedia('(hover: hover) and (pointer: fine)');
 function slowProjectWheel(event){
+  if(document.body.classList.contains('ev-detail-active'))return;
   if(!document.body.classList.contains('project-page')||!projectWheelPointer.matches||
     !event.cancelable||event.defaultPrevented||event.ctrlKey||event.metaKey||
     event.altKey||event.shiftKey||!event.deltaY||Math.abs(event.deltaX)>Math.abs(event.deltaY))return;
@@ -154,6 +155,7 @@ function render(){
   if(hasRendered&&view===currentView){scrollToDestination(true);markNavigation();scheduleScroll();return;}
   window.portfolioCover?.unmount();
   window.portfolioFeatured?.unmount();
+  window.portfolioEVDetail?.unmount();
   window.portfolioShadowEntry?.unmount();
   mirrorMotionCleanup?.();mirrorMotionCleanup=null;
   routeAnimation?.cancel();
@@ -165,7 +167,8 @@ function render(){
   if(p?.id==='the-shadow-set'){showShadowPage(shadowPage);window.portfolioShadowEntry?.mount();}
   if(isPublication)showPublicationPage(publicationPage);
   scrollToDestination(hasRendered);setupReveals();markNavigation();updateScroll();
-  if(hasRendered&&!reducedMotion&&main.animate){
+  if(p?.id==='ev-charger')window.portfolioEVDetail?.mount();
+  if(hasRendered&&p?.id!=='ev-charger'&&!reducedMotion&&main.animate){
     routeAnimation=main.animate([{opacity:.7,transform:'translateY(6px)'},{opacity:1,transform:'translateY(0)'}],{duration:220,easing:'cubic-bezier(.22,1,.36,1)'});
   }
   currentView=view;hasRendered=true;
