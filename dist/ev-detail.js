@@ -66,6 +66,7 @@
      stage.style.setProperty(side?'--ev-detail-right-ink':'--ev-detail-left-ink',ink(y>0?bottom:[...pixels.slice((side+4)*4,(side+4)*4+3)]));
      const headerRGB=y>58*w/stage.clientWidth?top:[...pixels.slice(side*4,side*4+3)];
      header.style.setProperty(side?'--ev-detail-nav-ink':'--ev-detail-logo-ink',ink(headerRGB));
+     if(!side)stage.style.setProperty('--ev-detail-title-ink',ink(headerRGB));
     }
    }else{context.fillStyle='#363636';context.fillRect(0,0,w,h);}
    context.drawImage(image,x,y,width,height);

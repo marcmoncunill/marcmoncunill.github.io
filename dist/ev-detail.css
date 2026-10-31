@@ -8,7 +8,7 @@
 .ev-detail-canvas{opacity:0;visibility:hidden;pointer-events:none}
 .ev-detail-stage.has-canvas .ev-detail-canvas{opacity:1;visibility:visible}
 .ev-detail-stage.has-canvas .ev-detail-poster{visibility:hidden}
-.ev-detail-title{position:absolute;left:3.5vw;bottom:78px;margin:0;font-size:clamp(28px,3.2vw,48px);line-height:1;letter-spacing:-.045em;font-weight:400;color:var(--ev-detail-left-ink,#fff);opacity:var(--ev-detail-title,1);pointer-events:none}
+.ev-detail-title{position:absolute;left:3.5vw;top:126px;margin:0;font-size:clamp(28px,3.2vw,48px);line-height:1;letter-spacing:-.045em;font-weight:400;color:var(--ev-detail-title-ink,#fff);opacity:var(--ev-detail-title,1);pointer-events:none}
 .ev-detail-skip,.ev-detail-toggle{position:absolute;bottom:20px;min-height:44px;padding:10px 0;border:0;border-radius:0;background:transparent;color:inherit;font-size:13px;line-height:1.4}
 .ev-detail-skip{left:3.5vw;color:var(--ev-detail-left-ink,#fff)}
 .ev-detail-toggle{right:3.5vw;color:var(--ev-detail-right-ink,#fff)}
