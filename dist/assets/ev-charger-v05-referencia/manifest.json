@@ -1,0 +1,49 @@
+{
+  "version": "Amazon Dock v05 — ambient de referència, revisió aprovada",
+  "revision": "reference-studio-approved",
+  "project_id": "ev-charger",
+  "background": "Original reference photograph: photographic gradient, lit floor and visible platform. Replaces the rejected near-uniform black v05.",
+  "frame_count": 360,
+  "fps": 30,
+  "duration_seconds": 12,
+  "video": "amazon-dock-v05-4k.mp4",
+  "poster": "poster-v05.webp",
+  "frame_numbering": {
+    "first": 1,
+    "last": 360,
+    "pattern": "%04d.webp"
+  },
+  "tiers": {
+    "4k": {
+      "directory": "frames/4k",
+      "width": 3840,
+      "height": 2160,
+      "count": 360
+    },
+    "desktop": {
+      "directory": "frames/desktop",
+      "width": 2560,
+      "height": 1440,
+      "count": 360
+    },
+    "mobile": {
+      "directory": "frames/mobile",
+      "width": 1280,
+      "height": 720,
+      "count": 360
+    }
+  },
+  "timing": "Frame n corresponds to corrected v04 frame n. No added pauses, frames or dissolves.",
+  "source": "Corrected v04 product PNG masters and original camera; reference photograph projected on the background studio.",
+  "product_lighting": "Reused unchanged inside the product matte. Blue LED spill retained.",
+  "final_transition": "Original rear-surface white transition retained unchanged",
+  "final_frame": {
+    "number": 360,
+    "rgb": [
+      255,
+      255,
+      255
+    ],
+    "webp_lossless": true
+  }
+}
