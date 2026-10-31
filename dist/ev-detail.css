@@ -2,11 +2,11 @@
 .project-ev{padding-top:0;background:#fff}
 .project-ev>.project-opening{position:relative;z-index:1;min-height:0;padding-top:72px;background:#fff}
 .ev-detail-scene{position:relative;height:100svh;background:#fff;overflow-anchor:none}
-.ev-detail-scene[data-motion=on]{height:700svh;margin-bottom:-50svh}
-.ev-detail-stage{position:sticky;top:0;height:100svh;overflow:clip;background:#363636;color:#fff}
-.ev-detail-poster,.ev-detail-canvas{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:contain}
+.ev-detail-scene[data-motion=on]{height:850svh;margin-bottom:-100svh}
+.ev-detail-stage{position:sticky;top:0;height:100svh;overflow:clip;background:#fff;color:#fff}
+.ev-detail-poster,.ev-detail-canvas{position:absolute;inset:0;width:100%;height:100%;max-width:none;object-fit:cover}
 .ev-detail-canvas{opacity:0;visibility:hidden;pointer-events:none}
-.ev-detail-stage.has-canvas .ev-detail-canvas{opacity:1;visibility:visible}
+.ev-detail-stage.has-canvas .ev-detail-canvas{opacity:calc(1 - var(--ev-detail-white,0));visibility:visible}
 .ev-detail-stage.has-canvas .ev-detail-poster{visibility:hidden}
 .ev-detail-title{position:absolute;left:3.5vw;top:126px;margin:0;font-size:clamp(28px,3.2vw,48px);line-height:1;letter-spacing:-.045em;font-weight:400;color:var(--ev-detail-title-ink,#fff);opacity:var(--ev-detail-title,1);pointer-events:none}
 .ev-detail-skip,.ev-detail-toggle{position:absolute;bottom:20px;min-height:44px;padding:10px 0;border:0;border-radius:0;background:transparent;color:inherit;font-size:13px;line-height:1.4}
@@ -23,8 +23,10 @@
 .project-page .site-header.is-ev-immersive.is-ev-light{color:#252521}
 .site-header.is-ev-immersive .wordmark{color:var(--ev-detail-logo-ink,#fff)}
 .site-header.is-ev-immersive nav{color:var(--ev-detail-nav-ink,#fff)}
+.ev-detail-scene[data-motion=on]+.project-opening :is(.project-intro,.project-hero){opacity:var(--ev-content-reveal,1);transform:translateY(calc((1 - var(--ev-content-reveal,1))*24px))}
+.ev-detail-scene[data-motion=on]+.project-opening:has(a:focus-visible,button:focus-visible) :is(.project-intro,.project-hero){opacity:1;transform:none}
 @media(max-width:700px){
- .ev-detail-scene[data-motion=on]{height:450svh}
+ .ev-detail-scene[data-motion=on]{height:600svh}
  .project-ev>.project-opening{padding-top:64px}
  .ev-detail-title,.ev-detail-skip{left:5vw}
  .ev-detail-toggle{right:5vw}
