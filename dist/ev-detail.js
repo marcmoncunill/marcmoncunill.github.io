@@ -1,13 +1,7 @@
 /* Deterministic v04 frames on native reversible scroll; no wheel/touch capture. */
 (()=>{
  const base='assets/ev-charger-v04/';
- const preference=matchMedia('(prefers-reduced-motion: reduce)');
- const requested=new URLSearchParams(location.search).get('ev-detail-motion');
- const preferenceKey='portfolio-ev-detail-motion';
- let saved=null;try{saved=localStorage.getItem(preferenceKey);}catch{}
- let clean=null,choice=requested==='on'?true:requested==='off'?false:saved==='on'?true:saved==='off'?false:null;
- function remember(){try{localStorage.setItem(preferenceKey,choice?'on':'off');}catch{}}
- if(requested==='on'||requested==='off')remember();
+ let clean=null;
  function unmount(){clean?.();clean=null;}
  function mount(){
   unmount();
@@ -16,14 +10,13 @@
   const stage=scene.querySelector('.ev-detail-stage');
   const canvas=scene.querySelector('canvas'),context=canvas.getContext('2d',{alpha:false});
   const poster=scene.querySelector('.ev-detail-poster');
-  const toggle=scene.querySelector('.ev-detail-toggle'),skip=scene.querySelector('.ev-detail-skip');
   const status=scene.querySelector('.ev-detail-status'),header=document.querySelector('.site-header');
   const article=scene.closest('.project-ev');
   const cache=new Map(),pending=new Map(),failed=new Set();
-  const samples=document.createElement('canvas');samples.width=5;samples.height=1;
+  const samples=document.createElement('canvas');samples.width=4;samples.height=1;
   const sampleContext=samples.getContext('2d',{willReadFrequently:true});
   const manifestRequest=new AbortController();
-  let alive=true,enabled=!preference.matches,manifest=null,tier=null,limit=0;
+  let alive=true,enabled=true,mediaFailed=false,manifest=null,tier=null,limit=0;
   let raf=0,desired=1,shown=0,queue=[],posterReady=false,painted=false;
 
   function diagnostics(){
@@ -51,7 +44,7 @@
    if(!iw||!ih)return;
    const w=canvas.width,h=canvas.height,scale=Math.max(w/iw,h/ih);
    const width=iw*scale,height=ih*scale,x=(w-width)/2,y=(h-height)/2;
-   const whiteMix=enabled?Math.max(0,Math.min(1,(index-326)/34)):0;
+   const whiteMix=enabled?Math.max(0,Math.min(1,(index-336)/24)):0;
    const whiteAlpha=whiteMix*whiteMix*(3-2*whiteMix);
    // Cover the viewport without distorting the supplied render. Portrait screens
    // use a centred cinematic crop; no synthetic ambient bands or geometry.
@@ -59,13 +52,13 @@
    if(whiteAlpha){context.fillStyle='rgba(255,255,255,'+whiteAlpha+')';context.fillRect(0,0,w,h);}
    if(sampleContext){
     const density=w/stage.clientWidth;
-    const points=[[w*.08,38*density],[w*.84,35*density],[w*.12,146*density],[w*.14,h-42*density],[w*.86,h-42*density]];
+    const points=[[w*.08,38*density],[w*.84,35*density],[w*.12,146*density],[w*.14,h-130*density]];
     points.forEach(([px,py],n)=>{
      const sx=Math.max(0,Math.min(iw-1,Math.floor((px-x)/scale)));
      const sy=Math.max(0,Math.min(ih-1,Math.floor((py-y)/scale)));
      sampleContext.drawImage(image,sx,sy,1,1,n,0,1,1);
     });
-    const pixels=sampleContext.getImageData(0,0,5,1).data;
+    const pixels=sampleContext.getImageData(0,0,4,1).data;
     const ink=values=>{
      const rgb=values.map(value=>{const n=(value+(255-value)*whiteAlpha)/255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4;});
      return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>.179?'#000':'#fff';
@@ -76,7 +69,6 @@
     header.style.setProperty('--ev-detail-nav-ink',heldWhite?'#000':color(1));
     stage.style.setProperty('--ev-detail-title-ink',color(2));
     stage.style.setProperty('--ev-detail-left-ink',color(3));
-    stage.style.setProperty('--ev-detail-right-ink',color(4));
    }
    stage.classList.add('has-canvas');painted=true;
   }
@@ -110,7 +102,7 @@
       if(!alive||controller.signal.aborted||error.name==='AbortError')return;
       failed.add(index);scene.dataset.frameError=String(index);
       if(!painted)drawPoster();
-      if(!shown&&index===desired){choice=false;mode();status.textContent='La seqüència no està disponible. Pots continuar amb el projecte.';}
+      if(!shown&&index===desired){mediaFailed=true;mode();status.textContent='La seqüència no està disponible. Pots continuar amb el projecte.';}
      })
      .finally(()=>{
       if(pending.get(index)===controller)pending.delete(index);
@@ -131,7 +123,7 @@
    raf=0;if(!alive)return;
    const rect=scene.getBoundingClientRect(),hold=scene.offsetHeight-stage.offsetHeight;
    const offset=Math.max(0,-rect.top);
-   const whiteHold=Math.min(hold,stage.offsetHeight*1.5);
+   const whiteHold=Math.min(hold,stage.offsetHeight*.9);
    const renderHold=Math.max(1,hold-whiteHold);
    const progress=enabled?Math.max(0,Math.min(1,offset/renderHold)):0;
    const whiteProgress=enabled?Math.max(0,Math.min(1,(offset-renderHold)/Math.max(1,whiteHold))):1;
@@ -145,7 +137,6 @@
    const inScene=rect.top<innerHeight&&rect.bottom>94&&contentTop>94;
    const light=enabled&&shown>=338;
    stage.classList.toggle('is-light',light);
-   stage.classList.toggle('is-finishing',enabled&&progress>=1);
    header.classList.toggle('is-ev-immersive',inScene);
    header.classList.toggle('is-ev-light',inScene&&light);
    document.body.classList.toggle('ev-detail-active',enabled&&rect.top<=0&&rect.bottom>=stage.offsetHeight);
@@ -164,24 +155,10 @@
    schedule();
   }
   function mode(){
-   enabled=choice??!preference.matches;
-   if(!context||typeof createImageBitmap!=='function')enabled=false;
+   enabled=!mediaFailed&&!!context&&typeof createImageBitmap==='function';
    scene.dataset.motion=enabled?'on':'off';
-   toggle.setAttribute('aria-pressed',String(enabled));
-   toggle.textContent=enabled?'Atura la immersió':'Activa la immersió';
-   toggle.disabled=!context||typeof createImageBitmap!=='function';
    if(!enabled){resetLoads();shown=0;scene.dataset.frame='1';drawPoster();}
    fit();update();
-  }
-  function toggleMotion(){
-   const top=scrollY+scene.getBoundingClientRect().top;
-   choice=!enabled;remember();mode();window.scrollTo({top,behavior:'instant'});schedule();
-  }
-  function skipScene(){
-   const target=document.querySelector('.project-ev>.project-opening');
-   target?.scrollIntoView({behavior:'instant',block:'start'});
-   const title=target?.querySelector('h1');
-   if(title){title.setAttribute('tabindex','-1');title.focus({preventScroll:true});}
   }
   function visibility(){
    if(document.hidden){cancelAnimationFrame(raf);raf=0;resetLoads();}
@@ -193,11 +170,9 @@
   }
   poster.addEventListener('load',posterLoaded);
   if(poster.complete&&poster.naturalWidth)posterLoaded();
-  toggle.addEventListener('click',toggleMotion);skip.addEventListener('click',skipScene);
   window.addEventListener('scroll',schedule,{passive:true});
   window.addEventListener('resize',fit,{passive:true});
   document.addEventListener('visibilitychange',visibility);
-  preference.addEventListener('change',mode);
   const observer=new ResizeObserver(fit);observer.observe(stage);
   mode();
   fetch(base+'manifest.json',{signal:manifestRequest.signal})
@@ -214,14 +189,13 @@
    })
    .catch(error=>{
     if(!alive||error.name==='AbortError')return;
-    choice=false;mode();status.textContent='Pots continuar amb les imatges i l’explicació del projecte.';
+    mediaFailed=true;mode();status.textContent='Pots continuar amb les imatges i l’explicació del projecte.';
    });
   clean=()=>{
    alive=false;manifestRequest.abort();cancelAnimationFrame(raf);resetLoads();observer.disconnect();
    poster.removeEventListener('load',posterLoaded);
-   toggle.removeEventListener('click',toggleMotion);skip.removeEventListener('click',skipScene);
    window.removeEventListener('scroll',schedule);window.removeEventListener('resize',fit);
-   document.removeEventListener('visibilitychange',visibility);preference.removeEventListener('change',mode);
+   document.removeEventListener('visibilitychange',visibility);
    header.classList.remove('is-ev-immersive','is-ev-light');document.body.classList.remove('ev-detail-active');
    header.style.removeProperty('--ev-detail-logo-ink');header.style.removeProperty('--ev-detail-nav-ink');
    article.style.removeProperty('--ev-content-reveal');
