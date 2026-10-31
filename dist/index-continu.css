@@ -20,6 +20,13 @@
 }
 /* Tiles stay joined during scrolling, including with reduced motion. */
 #work .project-card.reveal,#experimentacio .project-card.reveal{opacity:1;transform:none}
+/* Hit-testing also runs on scroll; a stale native :hover cannot leave a second tile white. */
+@media(hover:hover) and (pointer:fine){
+ .pointer-hover-ready .project-card .card-overlay{opacity:0}
+ .pointer-hover-ready .project-card .card-overlay h2{transform:translateY(6px)}
+ .pointer-hover-ready .project-card:is(.is-pointer-hover,.is-preview,:focus-visible) .card-overlay{opacity:1}
+ .pointer-hover-ready .project-card:is(.is-pointer-hover,.is-preview,:focus-visible) .card-overlay h2{transform:none}
+}
 @media(max-width:900px){
   .experimentation{scroll-margin-top:-20px}
 }
