@@ -1,6 +1,6 @@
 /* Approved continuous index: natural image proportions and the original white hover. */
 .work,.experimentation{position:relative;padding:0;scroll-margin-top:-6px}
-.work{scroll-margin-top:60px}
+.work{scroll-margin-top:20px}
 .work>.section-line,.experimentation>.section-line{
   position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden; /* taste-skill-ignore: accessible hidden text, never a visible divider. */
   clip-path:inset(50%);white-space:nowrap;
@@ -33,6 +33,6 @@
 }
 @media(max-width:600px){
   .experimentation{scroll-margin-top:-10px}
-  .work{scroll-margin-top:clamp(40px,10svh,85px)}
+  .work{scroll-margin-top:clamp(35px,8svh,70px)}
   .project-row,.experiment-grid{grid-template-columns:1fr}
 }

@@ -28,7 +28,7 @@
    enabled=choice??!preference.matches;
    scene.dataset.motion=enabled?'on':'off';
    control.setAttribute('aria-pressed',String(enabled));
-   control.setAttribute('aria-label',enabled?'Atura el moviment d’EV Charger':'Activa el moviment d’EV Charger');
+   control.setAttribute('aria-label',enabled?'Atura el moviment d’Amazon Dock':'Activa el moviment d’Amazon Dock');
    schedule();
   }
   function onMove(event){
