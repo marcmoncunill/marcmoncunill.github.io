@@ -6,6 +6,7 @@
   clip-path:inset(50%);white-space:nowrap;
 }
 .project-grid{display:block}
+#experimentacio{border-top:8px solid #fff} /* taste-skill-ignore: Marc explicitly requested a thin white strip between projects and experimentation. */
 .project-row{display:grid;grid-template-columns:var(--row-columns);gap:0;align-items:stretch}
 .project-row>.project-card{grid-column:auto}
 .experiment-grid{grid-template-columns:.75008524fr 1.77705977fr;gap:0}

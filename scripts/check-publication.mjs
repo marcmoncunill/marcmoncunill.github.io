@@ -47,11 +47,11 @@ export function checkPublication(){
  const mediaText=fs.readFileSync(path.join(dist,'cover-media.js'),'utf8');
  const media=JSON.parse(mediaText.slice(mediaText.indexOf('=')+1).trim().replace(/;$/,''));
  for(let n=1;n<=media.frames;n++)if(!paths.has(`${media.directory}frame-${String(n).padStart(3,'0')}.webp`))errors.push(`Missing cover frame ${n}`);
- const evManifest='assets/ev-charger-v04/manifest.json';
- if(paths.has('ev-detail.js')&&!paths.has(evManifest))errors.push('Missing EV Charger v04 manifest.');
+ const evManifest='assets/ev-charger-v05/manifest.json';
+ if(paths.has('ev-detail.js')&&!paths.has(evManifest))errors.push('Missing EV Charger v05 manifest.');
  if(paths.has(evManifest)){
   const ev=JSON.parse(fs.readFileSync(path.join(dist,evManifest),'utf8'));
-  if(ev.project_id!=='ev-charger'||ev.frame_count!==360||!ev.version.includes('v04'))errors.push('Unexpected EV Charger media version.');
+  if(ev.project_id!=='ev-charger'||ev.frame_count!==360||!ev.version.includes('v05'))errors.push('Unexpected EV Charger media version.');
   checkRef(evManifest,ev.poster);checkRef(evManifest,ev.video);
   for(const name of ['mobile','desktop','4k']){
    const tier=ev.tiers[name];

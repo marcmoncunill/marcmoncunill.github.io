@@ -1,6 +1,6 @@
-/* Deterministic v04 frames on native reversible scroll; no wheel/touch capture. */
+/* Deterministic v05 frames on native reversible scroll; no wheel/touch capture. */
 (()=>{
- const base='assets/ev-charger-v04/';
+ const base='assets/ev-charger-v05/';
  let clean=null;
  function unmount(){clean?.();clean=null;}
  function mount(){
