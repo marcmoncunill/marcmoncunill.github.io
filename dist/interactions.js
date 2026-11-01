@@ -156,6 +156,7 @@ function render(){
   window.portfolioCover?.unmount();
   window.portfolioFeatured?.unmount();
   window.portfolioEVDetail?.unmount();
+  window.portfolioDock?.unmount();
   window.portfolioShadowEntry?.unmount();
   mirrorMotionCleanup?.();mirrorMotionCleanup=null;
   routeAnimation?.cancel();
@@ -167,7 +168,7 @@ function render(){
   if(p?.id==='the-shadow-set'){showShadowPage(shadowPage);window.portfolioShadowEntry?.mount();}
   if(isPublication)showPublicationPage(publicationPage);
   scrollToDestination(hasRendered);setupReveals();markNavigation();updateScroll();
-  if(p?.id==='ev-charger')window.portfolioEVDetail?.mount();
+  if(p?.id==='ev-charger'){window.portfolioEVDetail?.mount();window.portfolioDock?.mount();}
   if(hasRendered&&p?.id!=='ev-charger'&&!reducedMotion&&main.animate){
     routeAnimation=main.animate([{opacity:.7,transform:'translateY(6px)'},{opacity:1,transform:'translateY(0)'}],{duration:220,easing:'cubic-bezier(.22,1,.36,1)'});
   }

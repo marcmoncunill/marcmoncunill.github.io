@@ -1,0 +1,6 @@
+/* A typographic colophon replaces the former row-and-rule metadata table. */
+.project-summary>.project-credits{display:flex;flex-direction:column;gap:14px;max-width:34ch;min-width:0;padding:0;margin:0;align-self:start}
+.project-summary>.project-credits .project-credit{padding:0;margin:0;font-size:16px;line-height:1.5;font-weight:400;color:#252521;letter-spacing:-.015em;max-width:none}
+.project-summary>.project-credits .credit-author{font-size:23px;line-height:1.2;letter-spacing:-.035em;margin-bottom:4px}
+.project-credit-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap} /* taste-skill-ignore: semantic field labels remain available to screen readers. */
+@media(max-width:700px){.project-summary>.project-credits{gap:10px;max-width:none}.project-summary>.project-credits .project-credit{font-size:15px}.project-summary>.project-credits .credit-author{font-size:21px}}

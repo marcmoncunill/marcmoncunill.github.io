@@ -18,7 +18,7 @@ El detall `#/project/ev-charger` incorpora la revisió v05 d'Amazon Dock amb l'a
 
 ## Versions i publicació
 
-Amazon Dock segueix l’estètica dels altres casos del portafoli: els mateixos components, marges, títols, fons i peus d’imatge. Després de la immersió i la introducció, quatre blocs compactes mostren interacció, sistema, maquetes i documentació. Les imatges secundàries es poden desplegar opcionalment. A la pàgina només es mostra el plànol general ampliable; els plànols de peces i l’explosionat es consulten a `assets/documents/amazon-dock-planols.pdf`, amb set pàgines vectorials i marcadors. La portada, l’índex, la immersió i les altres entrades es conserven.
+Amazon Dock presenta imatges grans amb títols i text al costat. Les galeries manuals canvien la imatge, el peu i l’explicació conjuntament, amb fletxes, teclat, gest horitzontal tàctil i ampliació. Els quatre estats LED es consulten al mateix espai; no hi ha reproducció automàtica. En mòbil les columnes s’apilen. Es conserven totes les imatges del projecte, amb els renders ampliats retallant només marges blancs buits. A la pàgina només es mostra el plànol general ampliable; els plànols de peces i l’explosionat es consulten a `assets/documents/amazon-dock-planols.pdf`, amb set pàgines vectorials. Les dades dels altres projectes es presenten com a crèdits tipogràfics sense taula, preservant tots els valors i les etiquetes accessibles. La portada, l’índex, la immersió, Liquid Glass i les galeries dels altres projectes es conserven. Recuperació anterior a aquesta proposta: `abans-amazon-dock-grafic-2026-11-01`.
 
 Treballa i previsualitza localment a `work`. La branca `main` es reserva per a les versions aprovades; GitHub Actions en publica només `dist/` a GitHub Pages.
 
