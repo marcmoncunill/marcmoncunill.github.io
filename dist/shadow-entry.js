@@ -14,6 +14,8 @@
  }
  document.addEventListener('pointerover',onProjectIntent,{passive:true});
  document.addEventListener('focusin',onProjectIntent);
+ // Warm local modules during idle time; GPU resources are still created only on entry.
+ if('requestIdleCallback' in window)requestIdleCallback(()=>prepare().catch(()=>{}),{timeout:2500});
  function diagnostics(extra={}){
   if(!debug)return;
   let output=document.getElementById('shadow-scene-diagnostics');
