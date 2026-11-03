@@ -17,13 +17,6 @@
  const lifts=[0,38,3,16,32,0,14,42];
  // Art-directed document anchors. X is a fraction of the page width; each Y
  // follows a content block, so photos/copy can be recomposed without a new scene.
- const course=[
-  {block:0,at:.05,x:.57}, {block:0,at:.34,x:.31}, {block:0,at:.83,x:.28},
-  {block:1,at:.36,x:.64}, {block:1,at:.73,x:.73},
-  {block:2,at:.18,x:.62}, {block:2,at:.62,x:.24}, {block:2,at:.89,x:.34},
-  {block:3,at:.14,x:.40}, {block:3,at:.66,x:.69},
-  {block:4,at:.20,x:.77}, {block:4,at:.72,x:.39}
- ];
  const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
  const ease=t=>{t=clamp(t);return t*t*(3-2*t);};
  let active=null;
@@ -52,7 +45,7 @@
   const mc=mask.getContext('2d'),sc=scratch.getContext('2d');
   let dead=false,raf=0,dirty=true,paths=[],obstacles=[],width=0,height=0,dpr=1,startY=0,endY=0,mergeY=0,endX=0,headY=0,spread=0,draws=0,articleY=0,arrivalScroll=0,spreadTravel=1;
   let endingRect=null,clipY=0,trunkDiameter=60,lastFrame=-Infinity,lastShape=-Infinity,lastPaintHead=-1,lastPaintScroll=-1,maskDirty=true,maskPaints=0,routeKnots=[],pendingInput=true,dropletCount=0;
-  let trunkPoints=[],streamPaths=[],fork=null;
+  let trunkPoints=[],streamPaths=[],fork=null,imageRects=[];
   const docRect=el=>{const r=el.getBoundingClientRect();return {x:r.left,y:r.top+scrollY,w:r.width,h:r.height};};
   const knot=(x,y)=>({x,y});
   function segment(knots,diameter,endDiameter=diameter){
@@ -90,6 +83,44 @@
    return {x:a.x+(b.x-a.x)*t,y,diameter:(a.diameter||trunkDiameter)+((b.diameter||trunkDiameter)-(a.diameter||trunkDiameter))*t};
   }
   function fronts(y){return streamPaths.filter(p=>y>=p.points[0].y&&(y<p.points.at(-1).y||(y===endY&&p.points.at(-1).y===endY)));}
+  function avoidImages(path){
+   // Real image rectangles become rounded exclusion envelopes. Their shoulders
+   // start before the photograph, so the stream bends in white space, not on it.
+   const radius=Math.max(path.diameter,path.endDiameter||path.diameter)*.65+12;
+   const edge=radius+3,lead=Math.max(140,radius*4);
+   let previous=path.points[0].x;
+   return path.points.map(p=>{
+    const intervals=[];
+    for(const r of imageRects){
+     const enter=ease((p.y-r.y+lead)/(lead-radius-8));
+     const leave=ease((r.y+r.h+lead-p.y)/(lead-radius-8));
+     const strength=Math.min(enter,leave);if(!strength)continue;
+     const mid=r.x+r.w*.5,half=(r.w*.5+radius)*strength;
+     intervals.push([Math.max(edge,mid-half),Math.min(width-edge,mid+half)]);
+    }
+    intervals.sort((a,b)=>a[0]-b[0]);const merged=[];
+    for(const i of intervals){if(i[1]<=i[0])continue;const last=merged.at(-1);if(last&&i[0]<=last[1])last[1]=Math.max(last[1],i[1]);else merged.push([...i]);}
+    const allowed=[];let left=edge;
+    for(const i of merged){if(i[0]>left)allowed.push([left,i[0]]);left=Math.max(left,i[1]);}
+    if(left<width-edge)allowed.push([left,width-edge]);
+    const desired=clamp(p.x,edge,width-edge);
+    let x=desired;
+    if(!allowed.some(i=>desired>=i[0]&&desired<=i[1])&&allowed.length){
+     const candidates=allowed.map(i=>clamp(desired,i[0],i[1]));
+     candidates.sort((a,b)=>(Math.abs(a-desired)+6*Math.abs(a-previous))-(Math.abs(b-desired)+6*Math.abs(b-previous)));
+     x=candidates[0];
+    }
+    previous=x;return {...p,x};
+   });
+  }
+  function imageSafety(){
+   let clearance=Infinity,collisions=0;const samples=[];
+   for(const path of paths)for(const p of path.points){
+    const radius=(p.diameter??Math.max(path.diameter,path.endDiameter||path.diameter))*.63+3;
+    for(const r of imageRects){const dx=Math.max(r.x-p.x,0,p.x-r.x-r.w),dy=Math.max(r.y-p.y,0,p.y-r.y-r.h),gap=Math.hypot(dx,dy)-radius;clearance=Math.min(clearance,gap);if(gap<0){collisions++;if(samples.length<6)samples.push({point:p,image:r,diameter:radius*2});}}
+   }
+   return {clearance:Number(clearance.toFixed(2)),collisions,images:imageRects.length,samples};
+  }
   function measure(){
    if(dead||!article.isConnected)return;
    dirty=false;width=document.documentElement.clientWidth;height=innerHeight;dpr=Math.min(devicePixelRatio||1,width<=700?1.25:1.5,Math.sqrt(4000000/(width*height)));
@@ -98,6 +129,7 @@
    maskDirty=true;
    articleY=docRect(article).y;
    const mobile=width<=700,summary=docRect(article.querySelector('.project-summary'));
+   imageRects=[...article.querySelectorAll('.image-button')].filter(e=>!e.closest('.next-project')).map(docRect);
    const sections=[...article.querySelectorAll('.project-section')].map(docRect);
    const sources=[...rack.children].filter(t=>getComputedStyle(t).display!=='none').map((t,i)=>{
     const r=docRect(t.firstChild),m=models[i];return {...knot(r.x+r.w*m[3],r.y+r.h*m[4]),diameter:Math.max(2.7,r.w*m[5]*1.24)};
@@ -120,33 +152,32 @@
     }
    }
    for(const g of groups)paths.push(segment([g,knot(width*.5,mergeY)],g.diameter));
-   const sectionElements=[...article.querySelectorAll('.project-section')];
-   const previousImages=[...sectionElements[0].querySelectorAll('.image-button')].map(docRect);
-   const followingImage=sectionElements[1].querySelector('.image-button');
-   const gapTop=Math.max(...previousImages.map(r=>r.y+r.h))+35;
-   const gapBottom=docRect(followingImage).y-28;
-   const forkStart=mobile?endingRect.y+12:gapTop;
-   const forkEnd=mobile?clipY-67:gapBottom;
+   const modelRows=[...article.querySelectorAll('.a3-model-row')];
+   const publication=docRect(article.querySelector('.a3-publication'));
+   const firstModel=docRect(modelRows[0]);
+   const forkStart=mobile?endingRect.y+12:publication.y+publication.h+26;
+   const forkEnd=mobile?clipY-67:firstModel.y-28;
    fork={startY:forkStart,endY:forkEnd,leftFraction:.56,rightFraction:.44};
    const knots=[knot(width*.5,mergeY),knot(width*.5,mergeY+65)];
-   for(const guide of course){
-    const s=sections[guide.block];if(!s)continue;
-    const y=s.y+s.h*guide.at;
-    if(y>knots.at(-1).y+65&&y<endY-220&&(y<forkStart-55||y>forkEnd+55))knots.push(knot(width*guide.x,y));
-   }
-   const note=article.querySelector('.project-note');
-   if(note){const r=docRect(note),y=r.y+r.h+25;if(y>knots.at(-1).y+70&&(y<forkStart-70||y>forkEnd+70))knots.push(knot(width*.32,y));}
-   if(endY-100>knots.at(-1).y+50&&(endY-100<forkStart-50||endY-100>forkEnd+50))knots.push(knot(endX,endY-100));
-   knots.push(knot(width*(mobile?.47:.25),forkStart),knot(width*(mobile?.51:.29),forkEnd),knot(endX,endY));
-   knots.sort((a,b)=>a.y-b.y);routeKnots=knots;
+   const anchor=(x,y)=>{if(y>mergeY+70&&y<endY-80)knots.push(knot(width*x,y));};
+   anchor(.45,publication.y+publication.h*.22);anchor(.46,publication.y+publication.h*.68);
+   const turns=[.53,.47,.55,.455,.515];
+   modelRows.forEach((el,i)=>{const r=docRect(el);anchor(mobile?.89:turns[i],r.y+r.h*.16);anchor(mobile?.91:(i===2?.52:turns[i]-.025),r.y+r.h*.73);});
+   const context=docRect(article.querySelector('.a3-context')),development=docRect(article.querySelector('.a3-development'));
+   anchor(mobile?.89:.93,context.y+context.h*.26);anchor(mobile?.90:.51,context.y+context.h*.72);
+   anchor(mobile?.90:.47,development.y+development.h*.24);anchor(mobile?.89:.54,development.y+development.h*.79);
+   knots.push(knot(width*(mobile?.47:.5),forkStart),knot(width*(mobile?.51:.52),forkEnd),knot(endX,endY));
+   knots.sort((a,b)=>a.y-b.y);
+   const ordered=knots.filter((p,i)=>!i||p.y-knots[i-1].y>8);routeKnots=ordered;
    const combined=Math.sqrt(groups.reduce((sum,g)=>sum+g.diameter*g.diameter,0));
    trunkDiameter=clamp(width*.045,mobile?21:38,mobile?29:72);
-   trunkPoints=smoothRoute(knots).map(p=>{
+   trunkPoints=smoothRoute(ordered).map(p=>{
     const a=p.y/173,i=Math.floor(a),t=ease(a-i);
     const noise=random(i)+(random(i+1)-random(i))*t-.5;
     const drift=width*.014*noise*ease((p.y-mergeY)/140)*ease((endY-p.y)/140);
     return {x:p.x+drift,y:p.y,diameter:combined+(trunkDiameter-combined)*ease((p.y-mergeY)/240)};
    });
+   trunkPoints=avoidImages({points:trunkPoints,diameter:trunkDiameter,endDiameter:trunkDiameter});
    const branchPoints=trunkPoints.filter(p=>p.y>=forkStart&&p.y<=forkEnd);
    const branches=[[-1,.56,mobile?.15:.105,.86],[1,.44,mobile?.20:.115,1.18]].map(([side,fraction,reach,power])=>branchPoints.map(p=>{
     const u=clamp((p.y-forkStart)/(forkEnd-forkStart));
@@ -157,6 +188,8 @@
    const makeStream=points=>({points,diameter:points[0].diameter,endDiameter:points.at(-1).diameter,originY:mergeY});
    streamPaths=[makeStream(trunkPoints.filter(p=>p.y<=forkStart)),...branches.map(makeStream),makeStream(trunkPoints.filter(p=>p.y>=forkEnd))];
    paths.push(...streamPaths);
+   for(const path of paths)path.points=avoidImages(path);
+   const safety=imageSafety();canvas.dataset.imageSafety=JSON.stringify(safety);
    const midpoint=(forkStart+forkEnd)*.5,left=atY(branches[0],midpoint),right=atY(branches[1],midpoint),base=atY(trunkPoints,midpoint);
    fork.separation=right.x-left.x;fork.areaRatio=(left.diameter**2+right.diameter**2)/base.diameter**2;
    fork.startX=branches[0][0].x;fork.endX=branches[0].at(-1).x;
@@ -164,7 +197,7 @@
    canvas.dataset.course=JSON.stringify(routeKnots);canvas.dataset.sources=String(sources.length);
    // Mask real text lines, rather than the unused area of a grid column.
    obstacles=[];
-   for(const el of article.querySelectorAll('h1,h2,p,.eyebrow,.project-breadcrumb,.image-caption')){
+   for(const el of article.querySelectorAll('h1,h2,p,.eyebrow,.project-breadcrumb,.image-caption')){ // taste-skill-ignore: masks existing text; adds no new eyebrow labels.
     const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
     while(walker.nextNode()){
      if(!walker.currentNode.textContent.trim())continue;
@@ -222,7 +255,8 @@
   const random=n=>{const v=Math.sin(n*127.1+311.7)*43758.5453;return v-Math.floor(v);};
   function drop(x,y,r,elongation=1,angle=0){
    if(y+r<scrollY||y-r>scrollY+height||y+r>=clipY-2||x-r<0||x+r>width)return;
-   if(obstacles.some(b=>x+r>b.x&&x-r<b.x+b.w&&y+r>b.y&&y-r<b.y+b.h))return;
+   const reach=r*Math.sqrt(elongation)+10;
+   if([...obstacles,...imageRects].some(b=>x+reach>b.x&&x-reach<b.x+b.w&&y+reach>b.y&&y-reach<b.y+b.h))return;
    const stretch=Math.sqrt(elongation);
    mc.beginPath();mc.ellipse(x,y-scrollY,r/stretch,r*stretch,angle,0,Math.PI*2);mc.fill();dropletCount++;
   }
@@ -333,7 +367,7 @@
      const blocks=[...obstacles,...[...article.querySelectorAll('.image-button')].map(docRect)];
      tips.push({...p,occluded:blocks.some(r=>p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h)});
     }
-    return {width,height,scrollY,sourceCount:rack.querySelectorAll('.a3-water-tap').length,visibleSources:[...rack.children].filter(t=>getComputedStyle(t).display!=='none').length,startY,mergeY,headY,headViewportY:headY-scrollY,endY,endX,arrivalScroll,spread,reduced:staticMode(),draws,maskPaints,scheduled:!!raf,canvasPixels:canvas.width*canvas.height,paths:paths.length,tips,optics:!!optics,jetDiameters:paths.slice(0,sourcesCount()).map(p=>p.diameter),trunkDiameter,clipY,dropletCount,routeKnots,fork};
+    return {imageSafety:imageSafety(),width,height,scrollY,sourceCount:rack.querySelectorAll('.a3-water-tap').length,visibleSources:[...rack.children].filter(t=>getComputedStyle(t).display!=='none').length,startY,mergeY,headY,headViewportY:headY-scrollY,endY,endX,arrivalScroll,spread,reduced:staticMode(),draws,maskPaints,scheduled:!!raf,canvasPixels:canvas.width*canvas.height,paths:paths.length,tips,optics:!!optics,jetDiameters:paths.slice(0,sourcesCount()).map(p=>p.diameter),trunkDiameter,clipY,dropletCount,routeKnots,fork};
    }
   };
   function sourcesCount(){return [...rack.children].filter(t=>getComputedStyle(t).display!=='none').length;}

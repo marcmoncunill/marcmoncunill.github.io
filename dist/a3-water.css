@@ -10,6 +10,75 @@
 .a3-water-case .project-opening .project-hero img{max-height:none}
 .a3-water-case>.project-note{margin-bottom:70px}
 .a3-water-case>.a3-water-ending{height:300px;margin:0;padding:0;pointer-events:none;user-select:none}
+/* A³ editorial: the white gutters also give the water a real route around media. */
+.a3-editorial .project-section{padding:0 3.5vw;margin:110px 0}
+.a3-editorial .a3-section-intro{display:grid;grid-template-columns:42% 43%;justify-content:space-between;align-items:start;margin-bottom:44px}
+.a3-editorial .a3-section-intro h2,.a3-editorial .project-summary h2{font-size:clamp(30px,3.3vw,52px);font-weight:400;line-height:1.07;letter-spacing:-.04em;margin:0}
+.a3-editorial .a3-section-intro p{font-size:18px;line-height:1.6;max-width:38ch;margin:0}
+.a3-editorial figure{margin:0;min-width:0}
+.a3-editorial .image-button{overflow:hidden;border-radius:12px;background:transparent}
+.a3-editorial .image-button img{display:block;width:100%;height:auto;object-fit:contain}
+.a3-editorial figcaption{font-size:12px;line-height:1.5;color:#67675f;margin:12px 0 0;max-width:44ch}
+.a3-document-link{display:inline-block;font-size:15px;line-height:1.5;margin-top:22px;text-underline-offset:5px;text-decoration:underline;text-decoration-thickness:1px}
+.a3-document-link:hover{color:#c73825}
+.a3-book-grid{display:grid;grid-template-columns:38% 48%;justify-content:space-between;align-items:start}
+.a3-book-spreads .a3-book-detail{width:54%;margin:30px 0 0 auto}
+.a3-models-heading{padding:0 3.5vw;margin:130px 0 0}
+.a3-models-heading h2{font-size:clamp(28px,3vw,44px);font-weight:400;line-height:1.15;letter-spacing:-.035em;margin:0 0 12px}
+.a3-models-heading p{font-size:16px;margin:0;color:#67675f}
+.a3-editorial .a3-model-row{display:grid;grid-template-columns:38% 43%;justify-content:space-between;align-items:center;gap:0;margin:80px 0 128px}
+.a3-editorial .a3-model-row.is-reversed{grid-template-columns:43% 38%}
+.a3-model-row.is-reversed .a3-model-photo{grid-column:2;grid-row:1}
+.a3-model-row.is-reversed .a3-model-copy{grid-column:1;grid-row:1}
+.a3-model-copy{min-width:0;max-width:540px}
+.a3-model-copy h2{font-size:clamp(32px,3.2vw,50px);font-weight:400;line-height:1.05;letter-spacing:-.045em;margin:0 0 24px}
+.a3-model-copy h2 sup{font-size:.48em;vertical-align:super}
+.a3-model-copy>p:not(.a3-model-kind){font-size:18px;line-height:1.6;max-width:38ch;margin:0}
+.a3-model-copy .a3-model-kind{font-size:13px;line-height:1.5;color:#67675f;margin:0 0 18px}
+.a3-action{display:grid;grid-template-columns:minmax(0,1fr) 128px;align-items:center;gap:24px;margin-top:34px}
+.a3-action h3{font-size:17px;line-height:1.35;font-weight:400;letter-spacing:-.02em;margin:0 0 12px}
+.a3-action p{font-size:14px;line-height:1.6;color:#67675f;margin:0;max-width:29ch}
+.a3-action .image-button{border-radius:0}
+.a3-action .image-button img{max-height:205px}
+.a3-editorial .a3-context-wide{width:82%}
+.a3-editorial .a3-render-pair{display:grid;grid-template-columns:40% 40%;justify-content:space-between;align-items:start;margin-top:48px}
+.a3-render-pair .image-caption{font-size:12px}
+.a3-editorial .a3-family-detail{width:34%;margin:55px 0 0 61%}
+.a3-editorial .a3-context .a3-render-pair{width:86%;margin-top:120px}
+.a3-editorial .a3-context .a3-family-detail{width:30%;margin-left:52%}
+.a3-editorial .a3-development-details{align-items:center}
+@media(max-width:1000px) and (min-width:701px){
+ .a3-editorial .a3-model-row{grid-template-columns:38% 46%;margin-bottom:100px}
+ .a3-editorial .a3-model-row.is-reversed{grid-template-columns:46% 38%}
+ .a3-action{grid-template-columns:minmax(0,1fr) 94px;gap:16px}
+ .a3-model-copy>p:not(.a3-model-kind),.a3-editorial .a3-section-intro p{font-size:16px}
+ .a3-action p{font-size:13px}
+}
+@media(max-width:700px){
+ .a3-editorial .project-section{padding:0 5vw;margin:72px 0}
+ .a3-editorial .a3-section-intro{display:block;margin-bottom:30px}
+ .a3-editorial .a3-section-intro h2{font-size:32px;margin-bottom:22px}
+ .a3-editorial .a3-section-intro p{font-size:16px;max-width:32ch}
+ .a3-editorial .a3-book-grid{display:block}
+ .a3-book-cover,.a3-book-spreads{width:calc(100% - 56px)}
+ .a3-book-spreads{margin-top:32px}
+ .a3-book-spreads .a3-book-detail{width:72%;margin:24px 0 0}
+ .a3-models-heading{padding:0 5vw;margin-top:84px}
+ .a3-editorial .a3-model-row,.a3-editorial .a3-model-row.is-reversed{display:flex;flex-direction:column;align-items:stretch;gap:28px;margin:42px 0 84px}
+ .a3-model-photo{width:calc(100% - 56px)}
+ .a3-model-copy h2{font-size:34px;margin-bottom:20px}
+ .a3-model-copy>p:not(.a3-model-kind){font-size:16px;line-height:1.6}
+ .a3-model-copy .a3-model-kind{margin-bottom:12px}
+ .a3-action{grid-template-columns:minmax(0,1fr) 96px;margin-top:26px;gap:20px;width:calc(100% - 45px)}
+ .a3-action .image-button img{max-height:180px}
+ .a3-editorial .a3-context-wide{width:calc(100% - 56px)}
+ .a3-editorial .a3-render-pair{display:block;margin-top:30px}
+ .a3-render-pair>figure{width:calc(100% - 56px);margin-bottom:30px}
+ .a3-editorial .a3-family-detail{width:66%;margin:30px 0 0}
+ .a3-editorial .a3-context .a3-render-pair{width:100%;margin-top:40px}
+ .a3-editorial .a3-context .a3-family-detail{width:66%;margin-left:0}
+ .a3-water-case .project-opening .project-hero{width:calc(100% - 56px);align-self:flex-start}
+}
 @media(max-width:1000px) and (min-width:701px){
  .a3-water-rack{height:120px;gap:10px;margin-bottom:34px}
  .a3-water-tap{padding-bottom:calc(var(--lift,0px)*.6)}
@@ -20,7 +89,7 @@
  .a3-water-tap:nth-child(n+6){display:none}
  .a3-water-tap{padding-bottom:calc(var(--lift,0px)*.5)}
  .a3-water-case .project-opening{padding-top:4px;padding-bottom:40px}
- .a3-water-case .project-opening .project-hero{width:100%}
+ .a3-water-case .project-opening .project-hero{width:calc(100% - 56px);align-self:flex-start}
  .a3-water-case .project-opening .project-hero img{max-height:38svh}
  .a3-water-case>.project-note{margin-bottom:55px}
  .a3-water-case>.a3-water-ending{height:230px}
