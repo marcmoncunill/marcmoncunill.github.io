@@ -126,6 +126,7 @@ function scheduleScroll(){if(!scrollScheduled){scrollScheduled=true;requestAnima
 const projectWheelPointer=matchMedia('(hover: hover) and (pointer: fine)');
 function slowProjectWheel(event){
   if(document.body.classList.contains('ev-detail-active'))return;
+  if(location.hash.startsWith('#/project/a3-collection'))return;
   if(!document.body.classList.contains('project-page')||!projectWheelPointer.matches||
     !event.cancelable||event.defaultPrevented||event.ctrlKey||event.metaKey||
     event.altKey||event.shiftKey||!event.deltaY||Math.abs(event.deltaX)>Math.abs(event.deltaY))return;
@@ -158,6 +159,7 @@ function render(){
   window.portfolioEVDetail?.unmount();
   window.portfolioDock?.unmount();
   window.portfolioShadowEntry?.unmount();
+  window.portfolioA3Water?.unmount();
   mirrorMotionCleanup?.();mirrorMotionCleanup=null;
   routeAnimation?.cancel();
   document.body.classList.toggle('project-page',!!p||isPublication);
@@ -169,6 +171,7 @@ function render(){
   if(isPublication)showPublicationPage(publicationPage);
   scrollToDestination(hasRendered);setupReveals();markNavigation();updateScroll();
   if(p?.id==='ev-charger'){window.portfolioEVDetail?.mount();window.portfolioDock?.mount();}
+  if(p?.id==='a3-collection')window.portfolioA3Water?.mount();
   if(hasRendered&&p?.id!=='ev-charger'&&!reducedMotion&&main.animate){
     routeAnimation=main.animate([{opacity:.7,transform:'translateY(6px)'},{opacity:1,transform:'translateY(0)'}],{duration:220,easing:'cubic-bezier(.22,1,.36,1)'});
   }

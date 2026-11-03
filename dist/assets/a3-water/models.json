@@ -1,0 +1,90 @@
+[
+  {
+    "id": "basin-straight-beige",
+    "label": "A³ Basin Straight",
+    "width": 234,
+    "height": 336,
+    "outlet": [
+      0.11151372469388522,
+      0.29990802492414204
+    ],
+    "jet_width": 0.09130407480093149
+  },
+  {
+    "id": "wall-fuse-black",
+    "label": "A³ Wall Fuse",
+    "width": 352,
+    "height": 168,
+    "outlet": [
+      0.07231909036636353,
+      0.9116956619989305
+    ],
+    "jet_width": 0.061482864618301394
+  },
+  {
+    "id": "kitchen-terracotta",
+    "label": "A³ Kitchen",
+    "width": 257,
+    "height": 508,
+    "outlet": [
+      0.10080572046658408,
+      0.35638885798416736
+    ],
+    "jet_width": 0.08313294199190252
+  },
+  {
+    "id": "basin-offset-brown",
+    "label": "A³ Basin Offset",
+    "width": 263,
+    "height": 348,
+    "outlet": [
+      0.09921753451851384,
+      0.28956636889227505
+    ],
+    "jet_width": 0.0812363251080531
+  },
+  {
+    "id": "wall-offset-beige",
+    "label": "A³ Wall Offset",
+    "width": 421,
+    "height": 168,
+    "outlet": [
+      0.05859591558823393,
+      0.9023631640842983
+    ],
+    "jet_width": 0.034785279978482575
+  },
+  {
+    "id": "basin-straight-black",
+    "label": "A³ Basin Straight",
+    "width": 234,
+    "height": 336,
+    "outlet": [
+      0.11151372469388522,
+      0.29990802492414204
+    ],
+    "jet_width": 0.09130407480093149
+  },
+  {
+    "id": "kitchen-brown",
+    "label": "A³ Kitchen",
+    "width": 257,
+    "height": 508,
+    "outlet": [
+      0.10080572046658408,
+      0.35638885798416736
+    ],
+    "jet_width": 0.08313294199190252
+  },
+  {
+    "id": "wall-fuse-terracotta",
+    "label": "A³ Wall Fuse",
+    "width": 352,
+    "height": 168,
+    "outlet": [
+      0.07231909036636353,
+      0.9116956619989305
+    ],
+    "jet_width": 0.061482864618301394
+  }
+]
