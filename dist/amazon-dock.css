@@ -39,8 +39,8 @@
 .dock-led-picker button:active{transform:scale(.96)}
 .dock-led-picker button:focus-visible{outline:2px solid #c73825;outline-offset:4px}
 .dock-handle-images{max-width:500px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.dock-handle-render{grid-column:1/-1;width:80%;max-width:420px}
-.dock-handle-render .dock-image-stage{aspect-ratio:2}
+.dock-handle-render{grid-column:1/-1;width:100%;max-width:500px}
+.dock-handle-render .dock-image-stage{aspect-ratio:8/5}
 .dock-handle-photo,.dock-handle-front{width:100%}
 /* These three source renders contain large empty white borders. Keep every product part inside. */
 .dock-image-stage[data-dock-framing] .image-button{height:100%;width:100%}
@@ -94,7 +94,7 @@
  .dock-light .dock-image-stage{max-height:240px}
  .dock-led-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
  .dock-led-picker button{flex-direction:column;justify-content:center;gap:7px;padding:10px 4px;font-size:13px;min-height:62px}
- .dock-handle-render{width:82%;max-width:330px}
+ .dock-handle-render{width:100%;max-width:500px}
  .dock-handle-images{gap:16px}
  .dock-connection-side{padding-top:0}
  .dock-connection-side>.dock-figure{width:80%;margin:24px 0 0 auto}
@@ -106,3 +106,15 @@
  .dock-endnote{padding-bottom:32px}
 }
 @media(prefers-reduced-motion:reduce){.dock-led-picker button,.dock-led-swatch{transition:none}}
+
+/* A rendered 3D turntable, with a full still beneath it until playback is ready. */
+.dock-handle-render .image-button,.dock-handle-render .image-button>img{height:100%;object-fit:contain}
+.dock-handle-render .dock-handle-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;opacity:0}
+.dock-handle-render.has-video:not(.is-static) .dock-handle-video{opacity:1}
+.dock-handle-pause{position:relative;display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:#20201e;cursor:pointer}
+.dock-handle-pause[hidden]{display:none}
+.dock-handle-pause span{width:12px;height:14px;border-left:4px solid currentColor;border-right:4px solid currentColor}
+.dock-handle-pause[data-show-play=true] span{width:0;height:0;border:0;border-left:12px solid currentColor;border-top:7px solid transparent;border-bottom:7px solid transparent;margin-left:3px}
+.dock-handle-pause:focus-visible{outline:2px solid #c73825;outline-offset:2px}
+
+.dock-handle-render figcaption{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;margin-top:4px}
