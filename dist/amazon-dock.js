@@ -10,9 +10,7 @@
   return '<figure class="dock-figure '+cl+'"><div class="dock-image-stage"'+(framing?' data-dock-framing="'+framing+'"':'')+'>'+image(file,alt,caption)+'</div><figcaption>'+caption+'</figcaption></figure>';
  }
  function handleTurntable(){
-  const still=F+'manec-360-poster.webp',alt='Mànec d’Amazon Dock, vista de producte';
-  const media=image(still,alt,'Mànec · Vista 360°').replace('</button>','<video class="dock-handle-video" muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback tabindex="-1" aria-hidden="true" data-handle-src="assets/amazon-dock/manec-360.mp4"></video></button>');
-  return '<figure class="dock-figure dock-handle-render" data-handle-state="idle"><div class="dock-image-stage">'+media+'</div><figcaption><span>Mànec · Vista 360°</span><button class="dock-handle-pause" type="button" aria-label="Atura el gir del mànec" aria-pressed="false" hidden><span aria-hidden="true"></span></button></figcaption></figure>';
+  return '<figure class="dock-figure dock-handle-render" data-handle-state="idle"><div class="dock-image-stage"><button type="button" class="image-button" data-image="amazon-dock/manec-360.png" data-caption="Mànec · Vista 360°" aria-label="Amplia: Mànec d’Amazon Dock, vista de producte"><picture><source media="(max-width:700px)" srcset="assets/amazon-dock/manec-360-mobile.png"><img src="assets/amazon-dock/manec-360.png" width="902" height="527" alt="Mànec d’Amazon Dock, vista de producte" loading="lazy" decoding="async"></picture><canvas class="dock-handle-canvas" width="720" height="421" aria-hidden="true"></canvas></button></div><figcaption><span>Mànec · Vista 360°</span><button class="dock-handle-pause" type="button" aria-label="Atura el gir del mànec" aria-pressed="false" hidden><span aria-hidden="true"></span></button></figcaption></figure>';
  }
  const copy=(title,text,extra='')=>'<div class="dock-copy"><h2>'+title+'</h2><p>'+text+'</p>'+extra+'</div>';
  function opening(p){
@@ -21,7 +19,7 @@
  window.amazonDockProject=(p,index)=>'<article class="project project-ev amazon-dock-case">'+evDetailOpening(p,index,opening(p))+
   '<div class="dock-content"><div class="dock-interactions">'+
    '<section class="dock-light" aria-labelledby="dock-light-title"><div class="dock-copy"><h2 id="dock-light-title">Llum i estat.</h2><p>Els LED indiquen l’estat de l’estació. La inclinació de 45° els fa visibles frontalment i des de sota.</p></div><div class="dock-led-view" aria-busy="false">'+figure(LED[0].file,LED[0].alt,LED[0].caption)+'</div><div class="dock-led-picker" role="group" aria-label="Selecciona l’estat del LED">'+LED.map((s,i)=>'<button type="button" data-dock-led="'+i+'" aria-pressed="'+(i===0)+'" style="--led-color:'+s.color+'"><span class="dock-led-swatch" aria-hidden="true"></span>'+s.label+'</button>').join('')+'</div><p class="dock-small">Difusor de policarbonat translúcid.</p></section>'+
-   '<section class="dock-handle" aria-labelledby="dock-handle-title"><div class="dock-copy"><h2 id="dock-handle-title">El mànec.</h2><p>ABS-PC i cautxú a les zones d’agafada. Del model digital a la maqueta física, per estudiar la geometria i provar el gest.</p></div><div class="dock-handle-images">'+handleTurntable()+figure(F+'manec-prototip.webp','Maqueta del mànec d’Amazon Dock sostinguda amb la mà','Agafada · Maqueta 1:1','dock-handle-photo')+figure(F+'manec-frontal.webp','Vista frontal de la maqueta física del connector d’Amazon Dock','Geometria · Maqueta','dock-handle-front')+'</div></section></div>'+
+   '<section class="dock-handle" aria-labelledby="dock-handle-title"><div class="dock-copy"><h2 id="dock-handle-title">El mànec.</h2><p>ABS-PC i cautxú a les zones d’agafada. Del model digital a la maqueta física, per estudiar la geometria i provar el gest.</p></div><div class="dock-handle-images">'+handleTurntable()+'<div class="dock-handle-prototypes">'+figure(F+'manec-prototip.webp','Maqueta del mànec d’Amazon Dock sostinguda amb la mà','Agafada · Maqueta 1:1','dock-handle-photo')+figure(F+'manec-frontal.webp','Vista frontal de la maqueta física del connector d’Amazon Dock','Geometria · Maqueta','dock-handle-front')+'</div></div></section></div>'+
   '<section class="dock-connection" aria-labelledby="dock-connection-title">'+figure(F+'connexio-en-us.webp','Fotomuntatge d’una mà connectant Amazon Dock a una furgoneta','Connexió al vehicle · Visualització de projecte','dock-connection-main')+'<div class="dock-connection-side"><div class="dock-copy"><h2 id="dock-connection-title">Al costat de la flota.</h2><p>El cable baixa des de la coberta i el mànec es recull al lateral. Amazon Dock es planteja per als espais de càrrega dels centres logístics.</p></div>'+figure(F+'context-exterior.webp','Amazon Dock a l’exterior d’un centre logístic al costat d’una furgoneta','Context exterior · Fotomuntatge')+'</div></section>'+
   '<section class="dock-interface" aria-labelledby="dock-interface-title">'+figure(F+'interficie-vehicle.webp','Interfície d’Amazon Dock a la pantalla interior de la furgoneta','Interfície al vehicle · Proposta digital')+'<div class="dock-interface-side"><div class="dock-copy"><h2 id="dock-interface-title">Control al vehicle.</h2><p>La gestió de la càrrega es trasllada a la pantalla de la furgoneta, amb identificació automàtica mitjançant Plug & Charge.</p></div>'+figure(F+'interficie-carrega.webp','Pantalla de càrrega d’Amazon Dock amb les opcions de gestió','Bateria, límit de càrrega i ajuda')+'</div></section>'+
   '<section class="dock-scale" aria-labelledby="dock-scale-title">'+figure(F+'maqueta-en-us.webp','Maqueta de cartró d’Amazon Dock al garatge, amb una persona connectant un cotxe vermell','Maqueta a escala real · Prova al garatge')+'<div class="dock-copy"><h2 id="dock-scale-title">Escala real.</h2><p>La maqueta de cartró permet comprovar l’alçada del conjunt, l’agafada i la relació entre la persona, el cable i el vehicle.</p></div></section>'+
@@ -33,20 +31,52 @@
  function mount(){
   unmount();const root=document.querySelector('.amazon-dock-case');if(!root)return;
   const controller=new AbortController(),probes=new Set(),animations=new Set();let alive=true,token=0;
-  const handle=root.querySelector('.dock-handle-render'),video=handle.querySelector('video'),pause=handle.querySelector('.dock-handle-pause');
+  const handle=root.querySelector('.dock-handle-render'),canvas=handle.querySelector('canvas'),pause=handle.querySelector('.dock-handle-pause');
+  const context=canvas.getContext('2d',{alpha:true}),mobile=matchMedia('(max-width:700px)').matches;
+  const tier=mobile?'mobile':'desktop',width=mobile?480:720,height=mobile?280:421;
+  canvas.width=width;canvas.height=height;handle.dataset.handleTier=tier;
   const motion=matchMedia('(prefers-reduced-motion:reduce)'),override=new URLSearchParams(location.search).get('handle-motion');
-  let visible=false,userPaused=false,failed=false,manualMotion=override==='on';
+  const sheets=new Map(),pending=new Map(),loaded=new Set();
+  let visible=false,userPaused=false,failed=!context,manualMotion=override==='on',phase=0,lastTime=0,playFrame=0,painted=0,wantedGroup=0;
   const reduced=()=>override==='off'||(!manualMotion&&motion.matches);
-  function updateHandle(){
-   const staticMode=reduced();handle.classList.toggle('is-static',staticMode);pause.hidden=failed||override==='off'||(!staticMode&&!handle.classList.contains('has-video'));
-   pause.setAttribute('aria-pressed',String(userPaused));pause.dataset.showPlay=String(staticMode||userPaused);pause.setAttribute('aria-label',staticMode?'Activa el gir del mànec':userPaused?'Continua el gir del mànec':'Atura el gir del mànec');
-   if(!alive||failed||staticMode||!visible||document.hidden||userPaused){video.pause();handle.dataset.handleState=failed?'fallback':staticMode?'reduced':userPaused?'paused':'offscreen';return;}
-   if(!video.getAttribute('src')){video.muted=true;video.src=video.dataset.handleSrc;video.load();}
-   handle.dataset.handleState=video.paused?'loading':'playing';
-   video.play().catch(error=>{if(alive&&error.name!=='AbortError'&&visible&&!userPaused&&!reduced())handle.dataset.handleState='blocked';});
+  const eligible=()=>alive&&!failed&&!reduced()&&visible&&!document.hidden&&!userPaused;
+  function stats(){handle.dataset.handleCache=String(sheets.size);handle.dataset.handlePending=String(pending.size);handle.dataset.handleDecodedBytes=String(sheets.size*width*6*height*4);handle.dataset.handleLoadedSheets=String(loaded.size);}
+  function release(bitmap){bitmap.close?.();}
+  function trim(){const keep=new Set([wantedGroup,(wantedGroup+1)%40]);for(const [key,bitmap] of sheets)if(!keep.has(key)){release(bitmap);sheets.delete(key);}}
+  async function decode(blob){
+   if(typeof createImageBitmap==='function')return createImageBitmap(blob);
+   const url=URL.createObjectURL(blob),img=new Image();try{img.src=url;await img.decode();return img;}finally{URL.revokeObjectURL(url);}
   }
-  video.addEventListener('playing',()=>{if(!alive)return;handle.classList.add('has-video');if(reduced()||!visible||document.hidden||userPaused){updateHandle();return;}handle.dataset.handleState='playing';pause.hidden=false;},{signal:controller.signal});
-  video.addEventListener('error',()=>{failed=true;handle.classList.remove('has-video');updateHandle();},{signal:controller.signal});
+  function loadSheet(group){
+   if(!eligible()||sheets.has(group)||pending.has(group)||pending.size>=2)return;
+   const url='assets/amazon-dock/manec-360-png/'+tier+'/sheet-'+String(group).padStart(2,'0')+'.png'; // taste-skill-ignore: zero-padding is an asset filename, never a visible label.
+   const task=(async()=>{
+    const response=await fetch(url,{signal:controller.signal,cache:'force-cache'});if(!response.ok)throw new Error('PNG '+response.status);
+    const bitmap=await decode(await response.blob());if(!alive){release(bitmap);return;}
+    sheets.set(group,bitmap);loaded.add(group);trim();stats();
+   })();
+   pending.set(group,task);stats();
+   task.catch(error=>{if(alive&&error.name!=='AbortError'){failed=true;handle.classList.remove('has-frames');updateHandle();}}).finally(()=>{pending.delete(group);if(alive){stats();prefetch(wantedGroup);}});
+  }
+  function prefetch(group){wantedGroup=group;if(!eligible())return;trim();loadSheet(group);loadSheet((group+1)%40);}
+  function tick(now){
+   playFrame=0;if(!eligible())return;
+   const delta=lastTime?Math.min((now-lastTime)/1000,.1):0;lastTime=now;
+   const candidate=painted?(phase+delta*24)%240:0,frame=Math.floor(candidate),group=Math.floor(frame/6);
+   prefetch(group);const bitmap=sheets.get(group);
+   if(bitmap){
+    phase=candidate;
+    if(painted!==frame+1){context.clearRect(0,0,width,height);context.drawImage(bitmap,(frame%6)*width,0,width,height,0,0,width,height);painted=frame+1;handle.dataset.handleFrame=String(painted);handle.classList.add('has-frames');}
+    handle.dataset.handleState='playing';pause.hidden=false;
+   }else handle.dataset.handleState='loading';
+   playFrame=requestAnimationFrame(tick);
+  }
+  function updateHandle(){
+   const staticMode=reduced();handle.classList.toggle('is-static',staticMode);pause.hidden=failed||override==='off'||(!staticMode&&!handle.classList.contains('has-frames'));
+   pause.setAttribute('aria-pressed',String(userPaused));pause.dataset.showPlay=String(staticMode||userPaused);pause.setAttribute('aria-label',staticMode?'Activa el gir del mànec':userPaused?'Continua el gir del mànec':'Atura el gir del mànec');
+   if(!eligible()){cancelAnimationFrame(playFrame);playFrame=0;lastTime=0;handle.dataset.handleState=failed?'fallback':staticMode?'reduced':userPaused?'paused':'offscreen';return;}
+   prefetch(Math.floor(Math.floor(phase)/6));if(!playFrame)playFrame=requestAnimationFrame(tick);
+  }
   pause.addEventListener('click',()=>{if(reduced()){manualMotion=true;userPaused=false;}else userPaused=!userPaused;updateHandle();},{signal:controller.signal});
   motion.addEventListener('change',updateHandle,{signal:controller.signal});document.addEventListener('visibilitychange',updateHandle,{signal:controller.signal});
   let visibilityFrame=0;
@@ -59,7 +89,7 @@
   function requestMeasure(){if(!visibilityFrame)visibilityFrame=requestAnimationFrame(measureHandle);}
   window.addEventListener('scroll',requestMeasure,{passive:true,capture:true,signal:controller.signal});
   window.addEventListener('resize',requestMeasure,{passive:true,signal:controller.signal});
-  updateHandle();measureHandle();
+  stats();updateHandle();measureHandle();
 
   const view=root.querySelector('.dock-led-view'),button=view.querySelector('[data-image]'),img=button.querySelector('img'),caption=view.querySelector('figcaption');caption.setAttribute('aria-live','polite');
   async function show(index){
@@ -77,7 +107,7 @@
    }catch{if(alive&&request===token){view.setAttribute('aria-busy','false');caption.textContent='No s’ha pogut carregar aquest estat.';}}finally{probes.delete(probe);}
   }
   root.addEventListener('click',event=>{const b=event.target.closest('[data-dock-led]');if(b)show(Number(b.dataset.dockLed));},{signal:controller.signal});
-  cleanup=()=>{alive=false;token++;controller.abort();cancelAnimationFrame(visibilityFrame);video.pause();video.removeAttribute('src');video.load();animations.forEach(a=>a.cancel());probes.forEach(p=>{p.src='';});root.querySelectorAll('.dock-outgoing').forEach(n=>n.remove());};
+  cleanup=()=>{alive=false;token++;controller.abort();cancelAnimationFrame(visibilityFrame);cancelAnimationFrame(playFrame);sheets.forEach(release);sheets.clear();canvas.width=0;canvas.height=0;animations.forEach(a=>a.cancel());probes.forEach(p=>{p.src='';});root.querySelectorAll('.dock-outgoing').forEach(n=>n.remove());};
  }
  window.portfolioDock={mount,unmount};
 })();
