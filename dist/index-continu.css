@@ -1,13 +1,17 @@
 /* Approved continuous index: natural image proportions and the original white hover. */
 .work,.experimentation{position:relative;padding:0;scroll-margin-top:-6px}
 .work{scroll-margin-top:20px}
-.work>.section-line,.experimentation>.section-line{
+.work>.section-line{
   position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden; /* taste-skill-ignore: accessible hidden text, never a visible divider. */
   clip-path:inset(50%);white-space:nowrap;
 }
 .project-grid{display:block}
-#experimentacio{border-top:8px solid #fff} /* taste-skill-ignore: Marc explicitly requested a thin white strip between projects and experimentation. */
+#experimentacio{border-top:0}
+.experimentation>.section-line{min-height:clamp(100px,11vw,160px);padding:32px max(24px,3vw);display:flex;align-items:center;background:#fff;color:#252521}
+.experimentation>.section-line h2{margin:0;font-size:clamp(28px,4.5vw,64px);font-weight:500;line-height:1.1;letter-spacing:-.035em}
+.experimentation>.section-line>span{display:none}
 .project-row{display:grid;grid-template-columns:var(--row-columns);gap:0;align-items:stretch}
+.project-row-mirall{grid-template-columns:minmax(0,3fr) minmax(0,2fr);background:#fff}
 .project-row>.project-card{grid-column:auto}
 .experiment-grid{grid-template-columns:.75008524fr 1.77705977fr;gap:0}
 .experiment-grid>.project-card{grid-column:auto}
@@ -30,9 +34,11 @@
 }
 @media(max-width:900px){
   .experimentation{scroll-margin-top:-20px}
+  .project-row-mirall{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
 }
 @media(max-width:600px){
   .experimentation{scroll-margin-top:-10px}
   .work{scroll-margin-top:clamp(35px,8svh,70px)}
   .project-row,.experiment-grid{grid-template-columns:1fr}
+  .experimentation>.section-line{min-height:100px;padding:28px 20px}
 }
