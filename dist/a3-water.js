@@ -84,34 +84,52 @@
   }
   function fronts(y){return streamPaths.filter(p=>y>=p.points[0].y&&(y<p.points.at(-1).y||(y===endY&&p.points.at(-1).y===endY)));}
   function avoidImages(path){
-   // Real image rectangles become rounded exclusion envelopes. Their shoulders
-   // start before the photograph, so the stream bends in white space, not on it.
+   // Plan a whole detour, not an independent nearest-side choice at every Y.
+   // Quintic shoulders have zero first/second derivatives at either end.
    const radius=Math.max(path.diameter,path.endDiameter||path.diameter)*.65+12;
-   const edge=radius+3,lead=Math.max(140,radius*4);
-   let previous=path.points[0].x;
-   return path.points.map(p=>{
-    const intervals=[];
-    for(const r of imageRects){
-     const enter=ease((p.y-r.y+lead)/(lead-radius-8));
-     const leave=ease((r.y+r.h+lead-p.y)/(lead-radius-8));
-     const strength=Math.min(enter,leave);if(!strength)continue;
-     const mid=r.x+r.w*.5,half=(r.w*.5+radius)*strength;
-     intervals.push([Math.max(edge,mid-half),Math.min(width-edge,mid+half)]);
+   const pad=radius+8,edge=radius+3,lead=clamp(width*.32,230,480);
+   const fade=t=>{t=clamp(t);return t*t*t*(t*(t*6-15)+10);};
+   let points=path.points.map(p=>({...p}));
+   const first=points[0].y,last=points.at(-1).y;
+   for(let pass=0;pass<3;pass++)for(const r of imageRects){
+    if(r.y-pad>last||r.y+r.h+pad<first)continue;
+    const crosses=points.some(p=>p.y>r.y-pad&&p.y<r.y+r.h+pad&&p.x>r.x-pad&&p.x<r.x+r.w+pad);
+    if(!crosses)continue;
+    let enter=Math.max(first,r.y-lead);const exit=Math.min(last,r.y+r.h+lead);
+    let top=Math.max(enter+1,r.y-pad);const bottom=Math.min(exit-1,r.y+r.h+pad);
+    const before=atY(points,enter).x,after=atY(points,exit).x;
+    const options=[{side:-1,x:r.x-pad},{side:1,x:r.x+r.w+pad}].filter(o=>o.x>=edge&&o.x<=width-edge);
+    if(!options.length)continue;
+    for(const o of options)o.cost=(o.x-before)**2/Math.max(50,top-enter)+(o.x-after)**2/Math.max(50,exit-bottom);
+    options.sort((a,b)=>a.cost-b.cost);
+    const chosen=width<=700?(options.find(o=>o.side===1)||options[0]):options[0];
+    // Finish passing the preceding image before crossing its horizontal field.
+    // This keeps a long anticipatory bend from cutting through a previous photo.
+    for(const b of imageRects){
+     if(b===r||b.y+b.h>=r.y||b.y+b.h+pad<=enter)continue;
+     const low=Math.min(before,chosen.x),high=Math.max(before,chosen.x);
+     if(high>b.x-pad&&low<b.x+b.w+pad)enter=Math.min(top-1,Math.max(enter,b.y+b.h+pad));
     }
-    intervals.sort((a,b)=>a[0]-b[0]);const merged=[];
-    for(const i of intervals){if(i[1]<=i[0])continue;const last=merged.at(-1);if(last&&i[0]<=last[1])last[1]=Math.max(last[1],i[1]);else merged.push([...i]);}
-    const allowed=[];let left=edge;
-    for(const i of merged){if(i[0]>left)allowed.push([left,i[0]]);left=Math.max(left,i[1]);}
-    if(left<width-edge)allowed.push([left,width-edge]);
-    const desired=clamp(p.x,edge,width-edge);
-    let x=desired;
-    if(!allowed.some(i=>desired>=i[0]&&desired<=i[1])&&allowed.length){
-     const candidates=allowed.map(i=>clamp(desired,i[0],i[1]));
-     candidates.sort((a,b)=>(Math.abs(a-desired)+6*Math.abs(a-previous))-(Math.abs(b-desired)+6*Math.abs(b-previous)));
-     x=candidates[0];
-    }
-    previous=x;return {...p,x};
-   });
+    top=Math.max(enter+1,top);
+    const room=chosen.side<0?chosen.x-edge:width-edge-chosen.x;
+    const feather=Math.max(.5,Math.min(18,room));
+    points=points.map(p=>{
+     if(p.y<=enter||p.y>=exit)return p;
+     const strength=Math.min(fade((p.y-enter)/Math.max(1,top-enter)),fade((exit-p.y)/Math.max(1,exit-bottom)));
+     const delta=p.x-chosen.x,rounded=Math.sqrt(delta*delta+feather*feather);
+     const outside=(p.x+chosen.x+chosen.side*rounded)*.5;
+     return {...p,x:clamp(p.x+(outside-p.x)*strength,edge,width-edge)};
+    });
+   }
+   return points;
+  }
+  function routeQuality(){
+   let maxTurn=0,sharpTurns=0,mainMaxTurn=0,worstMain=null;const examples=[];
+   for(const path of paths){const a=path.points;for(let i=1;i<a.length-1;i++){
+    const u=Math.atan2(a[i].x-a[i-1].x,a[i].y-a[i-1].y),v=Math.atan2(a[i+1].x-a[i].x,a[i+1].y-a[i].y),turn=Math.abs(v-u)*180/Math.PI;
+    maxTurn=Math.max(maxTurn,turn);if(path.originY===mergeY&&turn>mainMaxTurn){mainMaxTurn=turn;worstMain={...a[i],turn};}
+    if(turn>12){sharpTurns++;if(examples.length<8)examples.push({x:a[i].x,y:a[i].y,turn:Number(turn.toFixed(1))});}
+   }}return {maxTurn:Number(maxTurn.toFixed(2)),mainMaxTurn:Number(mainMaxTurn.toFixed(2)),worstMain,sharpTurns,examples};
   }
   function imageSafety(){
    let clearance=Infinity,collisions=0;const samples=[];
@@ -130,7 +148,6 @@
    articleY=docRect(article).y;
    const mobile=width<=700,summary=docRect(article.querySelector('.project-summary'));
    imageRects=[...article.querySelectorAll('.image-button')].filter(e=>!e.closest('.next-project')).map(docRect);
-   const sections=[...article.querySelectorAll('.project-section')].map(docRect);
    const sources=[...rack.children].filter(t=>getComputedStyle(t).display!=='none').map((t,i)=>{
     const r=docRect(t.firstChild),m=models[i];return {...knot(r.x+r.w*m[3],r.y+r.h*m[4]),diameter:Math.max(2.7,r.w*m[5]*1.24)};
    });
@@ -160,12 +177,19 @@
    fork={startY:forkStart,endY:forkEnd,leftFraction:.56,rightFraction:.44};
    const knots=[knot(width*.5,mergeY),knot(width*.5,mergeY+65)];
    const anchor=(x,y)=>{if(y>mergeY+70&&y<endY-80)knots.push(knot(width*x,y));};
-   anchor(.45,publication.y+publication.h*.22);anchor(.46,publication.y+publication.h*.68);
-   const turns=[.53,.47,.55,.455,.515];
-   modelRows.forEach((el,i)=>{const r=docRect(el);anchor(mobile?.89:turns[i],r.y+r.h*.16);anchor(mobile?.91:(i===2?.52:turns[i]-.025),r.y+r.h*.73);});
+   anchor(mobile?.90:.45,publication.y+publication.h*.22);anchor(mobile?.91:.46,publication.y+publication.h*.68);
+   const turns=[.49,.535,.515,.54,.485];
+   modelRows.forEach((el,i)=>{const r=docRect(el);anchor(mobile?.90:turns[i],r.y+r.h*.13);anchor(mobile?.91:(i===2?.49:turns[i]+.008),r.y+r.h*.76);});
    const context=docRect(article.querySelector('.a3-context')),development=docRect(article.querySelector('.a3-development'));
-   anchor(mobile?.89:.93,context.y+context.h*.26);anchor(mobile?.90:.51,context.y+context.h*.72);
-   anchor(mobile?.90:.47,development.y+development.h*.24);anchor(mobile?.89:.54,development.y+development.h*.79);
+   const contextImages=[...article.querySelector('.a3-context').querySelectorAll('.image-button')].map(docRect);
+   const photoTop=Math.min(...contextImages.map(r=>r.y)),photoBottom=Math.max(...contextImages.map(r=>r.y+r.h));
+   anchor(mobile?.90:.53,context.y-85);
+   anchor(mobile?.90:.88,photoTop-85);
+   anchor(mobile?.91:.895,photoTop+(photoBottom-photoTop)*.47);
+   anchor(mobile?.89:.87,photoBottom+55);
+   const developmentImages=[...article.querySelector('.a3-development').querySelectorAll('.image-button')].map(docRect);
+   const developmentTop=Math.min(...developmentImages.map(r=>r.y));
+   anchor(mobile?.90:.51,developmentTop-85);anchor(mobile?.89:.54,development.y+development.h*.79);
    knots.push(knot(width*(mobile?.47:.5),forkStart),knot(width*(mobile?.51:.52),forkEnd),knot(endX,endY));
    knots.sort((a,b)=>a.y-b.y);
    const ordered=knots.filter((p,i)=>!i||p.y-knots[i-1].y>8);routeKnots=ordered;
@@ -189,7 +213,7 @@
    streamPaths=[makeStream(trunkPoints.filter(p=>p.y<=forkStart)),...branches.map(makeStream),makeStream(trunkPoints.filter(p=>p.y>=forkEnd))];
    paths.push(...streamPaths);
    for(const path of paths)path.points=avoidImages(path);
-   const safety=imageSafety();canvas.dataset.imageSafety=JSON.stringify(safety);
+   const safety=imageSafety();canvas.dataset.imageSafety=JSON.stringify(safety);canvas.dataset.routeQuality=JSON.stringify(routeQuality());
    const midpoint=(forkStart+forkEnd)*.5,left=atY(branches[0],midpoint),right=atY(branches[1],midpoint),base=atY(trunkPoints,midpoint);
    fork.separation=right.x-left.x;fork.areaRatio=(left.diameter**2+right.diameter**2)/base.diameter**2;
    fork.startX=branches[0][0].x;fork.endX=branches[0].at(-1).x;

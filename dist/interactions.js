@@ -124,9 +124,32 @@ function scheduleScroll(){if(!scrollScheduled){scrollScheduled=true;requestAnima
 // A small reduction in wheel travel inside cases, without adding momentum.
 // Touch, keyboard, zoom, horizontal gestures and nested scrollers stay native.
 const projectWheelPointer=matchMedia('(hover: hover) and (pointer: fine)');
+const a3ScrollDebug=new URLSearchParams(location.search).get('a3-scroll-debug')==='on';
+const a3ScrollChoice=new URLSearchParams(location.search).get('a3-scroll-motion');
+let a3WheelFrame=0,a3WheelTarget=0,a3WheelTime=0;
+function stopA3Wheel(){cancelAnimationFrame(a3WheelFrame);a3WheelFrame=0;a3WheelTime=0;if(a3ScrollDebug)document.documentElement.dataset.a3WheelActive='false';}
+function stepA3Wheel(now){
+  a3WheelFrame=0;
+  if(!location.hash.startsWith('#/project/a3-collection')||document.hidden||document.querySelector('dialog[open]')){stopA3Wheel();return;}
+  const dt=a3WheelTime?Math.min(40,now-a3WheelTime):16;a3WheelTime=now;
+  const limit=Math.max(0,document.documentElement.scrollHeight-innerHeight);
+  a3WheelTarget=Math.max(0,Math.min(limit,a3WheelTarget));
+  const gap=a3WheelTarget-scrollY;
+  const settled=Math.abs(gap)<1.2;
+  const travel=Math.min(Math.abs(gap),Math.max(1,Math.abs(gap)*(1-Math.exp(-dt/65))));
+  const top=settled?a3WheelTarget:scrollY+Math.sign(gap)*travel;
+  window.scrollTo({top,left:scrollX,behavior:'instant'});
+  if(!settled)a3WheelFrame=requestAnimationFrame(stepA3Wheel);
+  else{a3WheelTime=0;if(a3ScrollDebug)document.documentElement.dataset.a3WheelActive='false';}
+}
+window.addEventListener('keydown',stopA3Wheel,{passive:true});
+window.addEventListener('pointerdown',stopA3Wheel,{passive:true});
+window.addEventListener('touchstart',stopA3Wheel,{passive:true});
+window.addEventListener('resize',stopA3Wheel,{passive:true});
+window.addEventListener('hashchange',stopA3Wheel);
+document.addEventListener('visibilitychange',stopA3Wheel);
 function slowProjectWheel(event){
   if(document.body.classList.contains('ev-detail-active'))return;
-  if(location.hash.startsWith('#/project/a3-collection'))return;
   if(!document.body.classList.contains('project-page')||!projectWheelPointer.matches||
     !event.cancelable||event.defaultPrevented||event.ctrlKey||event.metaKey||
     event.altKey||event.shiftKey||!event.deltaY||Math.abs(event.deltaX)>Math.abs(event.deltaY))return;
@@ -139,15 +162,27 @@ function slowProjectWheel(event){
   }
   const unit=event.deltaMode===1?16:event.deltaMode===2?innerHeight:1;
   const limit=Math.max(0,document.documentElement.scrollHeight-innerHeight);
-  const next=Math.max(0,Math.min(limit,scrollY+event.deltaY*unit*.82));
+  const a3=location.hash.startsWith('#/project/a3-collection');
+  if(a3&&a3ScrollDebug){
+    const d=document.documentElement.dataset;
+    d.a3WheelInput=String((Number(d.a3WheelInput)||0)+event.deltaY*unit);
+    d.a3WheelEvents=String((Number(d.a3WheelEvents)||0)+1);
+  }
+  const base=a3&&a3WheelFrame?a3WheelTarget:scrollY;
+  const next=Math.max(0,Math.min(limit,base+event.deltaY*unit*(a3?.72:.82)));
   if(next===scrollY)return;
   event.preventDefault();
+  if(a3&&(a3ScrollChoice==='on'||(a3ScrollChoice!=='off'&&!reducedMotion))){
+    if(a3ScrollDebug)document.documentElement.dataset.a3WheelActive='true';
+    a3WheelTarget=next;if(!a3WheelFrame)a3WheelFrame=requestAnimationFrame(stepA3Wheel);return;
+  }
   // Explicit instant movement also avoids extra motion under reduced motion.
   window.scrollTo({top:next,left:scrollX,behavior:'instant'});
 }
 window.addEventListener('wheel',slowProjectWheel,{passive:false});
 
 function render(){
+  stopA3Wheel();
   const hash=location.hash;
   const id=hash.match(/^#\/(?:project|experimentacio)\/([^/]+)/)?.[1];
   const p=projects.find(item=>item.id===id);

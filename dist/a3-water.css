@@ -31,6 +31,9 @@
 .a3-model-row.is-reversed .a3-model-photo{grid-column:2;grid-row:1}
 .a3-model-row.is-reversed .a3-model-copy{grid-column:1;grid-row:1}
 .a3-model-copy{min-width:0;max-width:540px}
+.a3-editorial .a3-model-photo .image-button{aspect-ratio:4/5}
+.a3-editorial .a3-model-photo .image-button img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
+.a3-model-row[data-a3-model="fuse"] .a3-model-photo .image-button img{object-position:center 58%}
 .a3-model-copy h2{font-size:clamp(32px,3.2vw,50px);font-weight:400;line-height:1.05;letter-spacing:-.045em;margin:0 0 24px}
 .a3-model-copy h2 sup{font-size:.48em;vertical-align:super}
 .a3-model-copy>p:not(.a3-model-kind){font-size:18px;line-height:1.6;max-width:38ch;margin:0}
@@ -46,6 +49,8 @@
 .a3-editorial .a3-family-detail{width:34%;margin:55px 0 0 61%}
 .a3-editorial .a3-context .a3-render-pair{width:86%;margin-top:120px}
 .a3-editorial .a3-context .a3-family-detail{width:30%;margin-left:52%}
+/* Give the two broad lane changes room to remain curves rather than elbows. */
+@media(min-width:701px){.a3-editorial .a3-context{margin-top:200px;margin-bottom:270px}}
 .a3-editorial .a3-development-details{align-items:center}
 @media(max-width:1000px) and (min-width:701px){
  .a3-editorial .a3-model-row{grid-template-columns:38% 46%;margin-bottom:100px}
