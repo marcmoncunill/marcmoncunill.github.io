@@ -16,6 +16,7 @@
  uniform float uDocY;
  uniform vec2 uEnd;
  uniform float uSpread;
+ uniform float uHead;
  in vec2 vUV;
  out vec4 outColor;
  float field(vec2 px){return texture(uMask,px/uSize).a;}
@@ -44,6 +45,9 @@
   float opposite=edge(p,-direction);
   float lateral=clamp((opposite-nearest)/max(1.,opposite+nearest),0.,.999);
   vec2 css=vec2(p.x/uScale,uDocY+(uSize.y-p.y)/uScale);
+  float tip=1.-smoothstep(0.,30.,uHead-css.y);
+  // The advancing edge is an open, breaking jet, not a reflective rounded lid.
+  lateral*=1.-tip*.78;
   vec2 flow=css*vec2(.018,.014)-vec2(uTime*.12,uTime*1.65);
   float wave=surface(flow);
   vec2 slope=vec2(surface(flow+vec2(.07,0.))-surface(flow-vec2(.07,0.)),surface(flow+vec2(0.,.07))-surface(flow-vec2(0.,.07)));
@@ -79,7 +83,7 @@
   colour+=vec3(.045)*glint;
   // Clear centre, narrow silver-grey edges. No opaque blue core.
   float rim=exp(-nearest*.72);
-  colour-=vec3(.14,.12,.11)*rim;
+  colour-=vec3(.14,.12,.11)*rim*(1.-tip*.8);
   float alpha=cover.a*cover.g*(.21+.58*fresnel+.13*rim+.18*flag+.07*wash);
   outColor=vec4(colour,alpha);
  }`;
@@ -94,6 +98,7 @@
   gl.useProgram(program);const pos=gl.getAttribLocation(program,'aPosition');gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
   const texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
   const size=gl.getUniformLocation(program,'uSize'),scale=gl.getUniformLocation(program,'uScale'),time=gl.getUniformLocation(program,'uTime'),docY=gl.getUniformLocation(program,'uDocY'),end=gl.getUniformLocation(program,'uEnd'),spread=gl.getUniformLocation(program,'uSpread');
+  const head=gl.getUniformLocation(program,'uHead');
   let uploaded=false;
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
   return {
@@ -102,7 +107,7 @@
     gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(program);gl.bindTexture(gl.TEXTURE_2D,texture);
     if(options.refresh||!uploaded){gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,mask);uploaded=true;}
-    gl.uniform2f(size,canvas.width,canvas.height);gl.uniform1f(scale,dpr);gl.uniform1f(time,options.time||0);gl.uniform1f(docY,options.docY||0);gl.uniform2f(end,...(options.end||[0,1e7]));gl.uniform1f(spread,options.spread||0);gl.drawArrays(gl.TRIANGLES,0,6);
+    gl.uniform2f(size,canvas.width,canvas.height);gl.uniform1f(scale,dpr);gl.uniform1f(time,options.time||0);gl.uniform1f(docY,options.docY||0);gl.uniform2f(end,...(options.end||[0,1e7]));gl.uniform1f(head,options.head??1e7);gl.uniform1f(spread,options.spread||0);gl.drawArrays(gl.TRIANGLES,0,6);
    },
    destroy(){gl.deleteTexture(texture);gl.deleteBuffer(buffer);gl.deleteProgram(program);shaders.forEach(s=>gl.deleteShader(s));gl.getExtension('WEBGL_lose_context')?.loseContext();}
   };

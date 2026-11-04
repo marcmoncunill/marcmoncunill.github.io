@@ -10,7 +10,7 @@
   return '<figure class="dock-figure '+cl+'"><div class="dock-image-stage"'+(framing?' data-dock-framing="'+framing+'"':'')+'>'+image(file,alt,caption)+'</div><figcaption>'+caption+'</figcaption></figure>';
  }
  function handleTurntable(){
-  return '<figure class="dock-figure dock-handle-render" data-handle-state="idle"><div class="dock-image-stage"><button type="button" class="image-button" data-image="amazon-dock/manec-360.png" data-caption="Mànec · Vista 360°" aria-label="Amplia: Mànec d’Amazon Dock, vista de producte"><picture><source media="(max-width:700px)" srcset="assets/amazon-dock/manec-360-mobile.png"><img src="assets/amazon-dock/manec-360.png" width="902" height="527" alt="Mànec d’Amazon Dock, vista de producte" loading="lazy" decoding="async"></picture><canvas class="dock-handle-canvas" width="720" height="421" aria-hidden="true"></canvas></button></div><figcaption><span>Mànec · Vista 360°</span><button class="dock-handle-pause" type="button" aria-label="Atura el gir del mànec" aria-pressed="false" hidden><span aria-hidden="true"></span></button></figcaption></figure>';
+  return '<figure class="dock-figure dock-handle-render" data-handle-state="idle"><div class="dock-image-stage"><button type="button" class="image-button" data-image="amazon-dock/manec-360.png" data-caption="Mànec · Vista 360°" aria-label="Amplia: Mànec d’Amazon Dock, vista de producte"><picture><source media="(max-width:700px)" srcset="assets/amazon-dock/manec-360-mobile.png"><img src="assets/amazon-dock/manec-360.png" width="902" height="527" alt="Mànec d’Amazon Dock, vista de producte" loading="lazy" decoding="async"></picture><canvas class="dock-handle-canvas" width="720" height="421" aria-hidden="true"></canvas></button></div><figcaption><span>Mànec · Vista 360°</span></figcaption></figure>';
  }
  const copy=(title,text,extra='')=>'<div class="dock-copy"><h2>'+title+'</h2><p>'+text+'</p>'+extra+'</div>';
  function opening(p){
@@ -31,15 +31,14 @@
  function mount(){
   unmount();const root=document.querySelector('.amazon-dock-case');if(!root)return;
   const controller=new AbortController(),probes=new Set(),animations=new Set();let alive=true,token=0;
-  const handle=root.querySelector('.dock-handle-render'),canvas=handle.querySelector('canvas'),pause=handle.querySelector('.dock-handle-pause');
+  const handle=root.querySelector('.dock-handle-render'),canvas=handle.querySelector('canvas');
   const context=canvas.getContext('2d',{alpha:true}),mobile=matchMedia('(max-width:700px)').matches;
   const tier=mobile?'mobile':'desktop',width=mobile?480:720,height=mobile?280:421;
   canvas.width=width;canvas.height=height;handle.dataset.handleTier=tier;
-  const motion=matchMedia('(prefers-reduced-motion:reduce)'),override=new URLSearchParams(location.search).get('handle-motion');
   const sheets=new Map(),pending=new Map(),loaded=new Set();
-  let visible=false,userPaused=false,failed=!context,manualMotion=override==='on',phase=0,lastTime=0,playFrame=0,painted=0,wantedGroup=0;
-  const reduced=()=>override==='off'||(!manualMotion&&motion.matches);
-  const eligible=()=>alive&&!failed&&!reduced()&&visible&&!document.hidden&&!userPaused;
+  let visible=false,failed=!context,phase=0,lastTime=0,playFrame=0,painted=0,wantedGroup=0;
+  // This small product turntable is always automatic. Only invisible work stops.
+  const eligible=()=>alive&&!failed&&visible&&!document.hidden;
   function stats(){handle.dataset.handleCache=String(sheets.size);handle.dataset.handlePending=String(pending.size);handle.dataset.handleDecodedBytes=String(sheets.size*width*6*height*4);handle.dataset.handleLoadedSheets=String(loaded.size);}
   function release(bitmap){bitmap.close?.();}
   function trim(){const keep=new Set([wantedGroup,(wantedGroup+1)%40]);for(const [key,bitmap] of sheets)if(!keep.has(key)){release(bitmap);sheets.delete(key);}}
@@ -67,18 +66,15 @@
    if(bitmap){
     phase=candidate;
     if(painted!==frame+1){context.clearRect(0,0,width,height);context.drawImage(bitmap,(frame%6)*width,0,width,height,0,0,width,height);painted=frame+1;handle.dataset.handleFrame=String(painted);handle.classList.add('has-frames');}
-    handle.dataset.handleState='playing';pause.hidden=false;
+    handle.dataset.handleState='playing';
    }else handle.dataset.handleState='loading';
    playFrame=requestAnimationFrame(tick);
   }
   function updateHandle(){
-   const staticMode=reduced();handle.classList.toggle('is-static',staticMode);pause.hidden=failed||override==='off'||(!staticMode&&!handle.classList.contains('has-frames'));
-   pause.setAttribute('aria-pressed',String(userPaused));pause.dataset.showPlay=String(staticMode||userPaused);pause.setAttribute('aria-label',staticMode?'Activa el gir del mànec':userPaused?'Continua el gir del mànec':'Atura el gir del mànec');
-   if(!eligible()){cancelAnimationFrame(playFrame);playFrame=0;lastTime=0;handle.dataset.handleState=failed?'fallback':staticMode?'reduced':userPaused?'paused':'offscreen';return;}
+   if(!eligible()){cancelAnimationFrame(playFrame);playFrame=0;lastTime=0;handle.dataset.handleState=failed?'fallback':'offscreen';return;}
    prefetch(Math.floor(Math.floor(phase)/6));if(!playFrame)playFrame=requestAnimationFrame(tick);
   }
-  pause.addEventListener('click',()=>{if(reduced()){manualMotion=true;userPaused=false;}else userPaused=!userPaused;updateHandle();},{signal:controller.signal});
-  motion.addEventListener('change',updateHandle,{signal:controller.signal});document.addEventListener('visibilitychange',updateHandle,{signal:controller.signal});
+  document.addEventListener('visibilitychange',updateHandle,{signal:controller.signal});
   let visibilityFrame=0;
   function measureHandle(){
    visibilityFrame=0;if(!alive)return;const rect=handle.getBoundingClientRect();

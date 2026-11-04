@@ -17,7 +17,9 @@
   const sampleContext=samples.getContext('2d',{willReadFrequently:true});
   const manifestRequest=new AbortController();
   let alive=true,enabled=true,mediaFailed=false,manifest=null,tier=null,limit=0;
-  let raf=0,desired=1,shown=0,queue=[],posterReady=false,painted=false;
+  let raf=0,desired=1,shown=0,queue=[],posterReady=false,painted=false,cursor=1,lastStamp=0,rawTarget=1;
+  const reduced=matchMedia('(prefers-reduced-motion:reduce)');
+  const debug=new URLSearchParams(location.search).get('ev-debug')==='on',trace=[];
 
   function diagnostics(){
    scene.dataset.cache=String(cache.size);
@@ -27,7 +29,7 @@
   function close(image){image?.close?.();}
   function trim(){
    while(cache.size>limit){
-    const candidate=[...cache.keys()].find(n=>n!==shown&&n!==desired);
+    const candidate=[...cache.keys()].filter(n=>n!==shown&&n!==desired).sort((a,b)=>Math.abs(b-desired)-Math.abs(a-desired))[0];
     if(candidate===undefined)break;
     close(cache.get(candidate));cache.delete(candidate);
    }
@@ -75,24 +77,25 @@
   function drawPoster(){if(posterReady)draw(poster,1);}
   function show(index,image){
    draw(image,index);shown=index;scene.dataset.frame=String(index);
+   if(debug){trace.push({frame:index,target:rawTarget,at:Math.round(performance.now())});if(trace.length>60)trace.shift();scene.dataset.trace=JSON.stringify(trace);}
    status.textContent='';trim();schedule();
   }
   function plan(){
    const direction=Math.sign(desired-shown)||1;
-   queue=[desired,...[1,2,3,4,-1,-2].map(offset=>desired+offset*direction)]
+   queue=[desired,...Array.from({length:12},(_,i)=>desired+(i+1)*direction),...Array.from({length:6},(_,i)=>desired-(i+1)*direction)]
     .filter((n,i,items)=>n>=1&&n<=manifest.frame_count&&items.indexOf(n)===i&&!cache.has(n)&&!pending.has(n)&&!failed.has(n));
    pump();
   }
   function pump(){
    if(!alive||!enabled||!tier||!context)return;
-   while(pending.size<2&&queue.length){
+   while(pending.size<3&&queue.length){
     const index=queue.shift(),controller=new AbortController();
     pending.set(index,controller);diagnostics();
-    fetch(base+tier.directory+'/'+String(index).padStart(4,'0')+'.webp',{signal:controller.signal})
+    fetch(base+tier.directory+'/'+String(index).padStart(4,'0')+'.webp',{signal:controller.signal,cache:'force-cache'})
      .then(response=>{if(!response.ok)throw new Error('Frame unavailable');return response.blob();})
      .then(blob=>createImageBitmap(blob))
      .then(image=>{
-      if(!alive||!enabled||controller.signal.aborted||Math.abs(index-desired)>8){close(image);return;}
+      if(!alive||!enabled||controller.signal.aborted||Math.abs(index-desired)>40){close(image);return;}
       cache.set(index,image);
       const direction=Math.sign(desired-shown);
       if(index===desired||direction&&(index-shown)*direction>0&&(desired-index)*direction>=0)show(index,image);
@@ -112,14 +115,18 @@
   }
   function request(index){
    desired=index;scene.dataset.targetFrame=String(index);
-   for(const [n,controller] of pending)if(Math.abs(n-index)>8){controller.abort();pending.delete(n);}
+   for(const [n,controller] of pending)if(Math.abs(n-index)>40){controller.abort();pending.delete(n);}
    if(cache.has(index)){
     const image=cache.get(index);cache.delete(index);cache.set(index,image);
     if(shown!==index)show(index,image);
+   }else{
+    const direction=Math.sign(index-shown);
+    const nearest=[...cache.keys()].filter(n=>(n-shown)*direction>0&&(index-n)*direction>=0).sort((a,b)=>Math.abs(a-index)-Math.abs(b-index))[0];
+    if(nearest!==undefined)show(nearest,cache.get(nearest));
    }
    plan();
   }
-  function update(){
+  function update(stamp=performance.now()){
    raf=0;if(!alive)return;
    const rect=scene.getBoundingClientRect(),hold=scene.offsetHeight-stage.offsetHeight;
    const offset=Math.max(0,-rect.top);
@@ -141,12 +148,22 @@
    header.classList.toggle('is-ev-light',inScene&&light);
    document.body.classList.toggle('ev-detail-active',enabled&&rect.top<=0&&rect.bottom>=stage.offsetHeight);
    stage.style.setProperty('--ev-detail-title',String(enabled?Math.max(0,1-progress/.08):1));
-   if(enabled&&manifest&&tier&&rect.top<innerHeight&&rect.bottom>0)request(1+Math.round(progress*(manifest.frame_count-1)));
+   if(enabled&&manifest&&tier&&rect.top<innerHeight&&rect.bottom>0){
+    rawTarget=1+progress*(manifest.frame_count-1);
+    const delta=lastStamp?Math.min(64,Math.max(1,stamp-lastStamp)):16;lastStamp=stamp;
+    const response=reduced.matches?45:85;
+    cursor=cursor+(rawTarget-cursor)*(1-Math.exp(-delta/response));
+    if(Math.abs(rawTarget-cursor)<.08)cursor=rawTarget;
+    scene.dataset.rawTargetFrame=String(Math.round(rawTarget));
+    request(Math.max(1,Math.min(manifest.frame_count,Math.round(cursor))));
+    if(cursor!==rawTarget)schedule();
+   }else lastStamp=0;
   }
   function schedule(){if(alive&&!raf)raf=requestAnimationFrame(update);}
   function fit(){
    const w=stage.clientWidth,h=stage.clientHeight;
-   const ratio=Math.min(devicePixelRatio||1,2,Math.sqrt(3840*2160/Math.max(1,w*h)));
+   // The viewport does not need a retina 4K drawing surface for every scroll tick.
+   const ratio=Math.min(devicePixelRatio||1,1.25,Math.sqrt(1920*1080/Math.max(1,w*h)));
    const width=Math.max(1,Math.round(w*ratio)),height=Math.max(1,Math.round(h*ratio));
    if(canvas.width!==width||canvas.height!==height){
     canvas.width=width;canvas.height=height;
@@ -180,11 +197,13 @@
    .then(data=>{
     if(!alive)return;
     manifest=data;
-    const width=Math.max(stage.clientWidth,stage.clientHeight*16/9)*(devicePixelRatio||1);
     const constrained=navigator.connection?.saveData||(navigator.deviceMemory||8)<4;
-    const name=constrained||width<=1280?'mobile':stage.clientWidth<=700||width<=2560?'desktop':'4k';
+    // Use the existing corrected 720p sequence on phones and ordinary laptops;
+    // reserve 1440p for genuinely large stages. The 4K masters stay untouched.
+    const width=Math.max(stage.clientWidth,stage.clientHeight*16/9);
+    const name=constrained||stage.clientWidth<=700||width<=1920?'mobile':'desktop';
     tier=manifest.tiers[name];scene.dataset.tier=name;
-    limit=Math.max(2,Math.min(10,Math.floor(72*1024*1024/(tier.width*tier.height*4))));
+    limit=Math.max(2,Math.min(20,Math.floor(72*1024*1024/(tier.width*tier.height*4))));
     scene.dataset.cacheLimit=String(limit);schedule();
    })
    .catch(error=>{

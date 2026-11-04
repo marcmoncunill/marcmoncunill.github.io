@@ -68,6 +68,7 @@ const MOBILE=[
 ];
 
 export async function createShadowSet(root,options={}){
+  if(options.models)return new ShadowSet(root,options.models,{...DEFAULTS,...options});
   const response=await fetch(options.assets || DEFAULTS.assets);
   if(!response.ok)throw new Error(`Cannot load CAD geometry (${response.status})`);
   return new ShadowSet(root,await response.json(),{...DEFAULTS,...options});

@@ -25,7 +25,10 @@
   const events=new AbortController(),signal=events.signal;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const reviewMotion=new URLSearchParams(location.search).get('a3-water-motion');
-  const staticMode=()=>reviewMotion==='on'?false:reviewMotion==='off'?true:reduced.matches;
+  // Scroll remains the narrative even with reduced motion. Only the autonomous
+  // surface ripples stop; the old finished still incorrectly skipped all pouring.
+  const staticMode=()=>reviewMotion==='off';
+  const surfaceMotion=()=>reviewMotion==='on'||!reduced.matches;
   const rack=document.createElement('div');rack.className='a3-water-rack';rack.setAttribute('aria-hidden','true');
   for(let i=0;i<models.length;i++){
    const m=models[i],tile=document.createElement('div');tile.className='a3-water-tap';tile.style.setProperty('--lift',lifts[i]+'px');
@@ -266,13 +269,22 @@
      const ripple=natural*(.08*Math.sin(travel*.067)+.035*Math.sin(travel*.173)+.05*Math.sin(travel*.027+p.x*.021));
      const neck=.86+.14*Math.sin(travel*.018+p.x*.004);
      let r=dia*.5*neck*(1+ripple);
-     if(headY<pts.at(-1).y){const nose=clamp((headY-p.y)/Math.max(1,dia*.7));r*=.22+.78*ease(nose);}
+     if(headY<pts.at(-1).y){
+      const breakup=1-clamp((headY-p.y)/Math.max(1,dia*1.1));
+      r*=1-breakup*.32;
+     }
      const drift=natural*Math.min(2.2,dia*.055)*(.65*Math.sin(travel*.073)+.35*Math.sin(travel*.157));
      const cx=p.x+dy/len*drift,cy=p.y-scrollY-dx/len*drift;
      left.push(knot(cx+dy/len*r,cy-dx/len*r));right.push(knot(cx-dy/len*r,cy+dx/len*r));
     }
     mc.beginPath();mc.moveTo(left[0].x,left[0].y);for(const p of left)mc.lineTo(p.x,p.y);for(const p of right.reverse())mc.lineTo(p.x,p.y);mc.closePath();mc.fill();
-    if(headY<=pts.at(-1).y){const p=visible.at(-1),t=ease((p.y-pts[0].y)/190),r=(p.diameter??path.diameter+(path.endDiameter-path.diameter)*t)*.13;mc.beginPath();mc.arc(p.x,p.y-scrollY,r,0,Math.PI*2);mc.fill();}
+   }
+   // The jet breaks into spray instead of finishing in a sealed rounded cap.
+   // Fade only the short leading edge; detached droplets are painted afterwards.
+   if(headY<endY-20&&headY>scrollY&&headY<scrollY+height+40){
+    const tip=headY-scrollY,fade=mc.createLinearGradient(0,tip-36,0,tip+3);
+    fade.addColorStop(0,'rgba(255,255,255,1)');fade.addColorStop(.45,'rgba(255,255,255,.75)');fade.addColorStop(1,'rgba(255,255,255,0)');
+    mc.save();mc.globalCompositeOperation='destination-in';mc.fillStyle=fade;mc.fillRect(0,0,width,height);mc.restore();
    }
    paintDrops(time);paintEnding(time);mc.restore();
   }
@@ -341,12 +353,12 @@
   }
   function draw(stamp){
    raf=0;if(dead||document.hidden||(!ctx&&!optics)||!mc||!sc)return;
-   const animated=!staticMode()&&!!optics;
+   const animated=!staticMode()&&surfaceMotion();
    if(animated&&!pendingInput&&stamp-lastFrame<33){raf=requestAnimationFrame(draw);return;}
    pendingInput=false;lastFrame=stamp;
    if(dirty)measure();headY=staticMode()?endY:headForScroll(scrollY);
    spread=headY>=endY-.25?(staticMode()?1:ease((scrollY-arrivalScroll)/spreadTravel)):0;
-   const time=staticMode()?0:stamp/1000;
+   const time=staticMode()||!surfaceMotion()?0:stamp/1000;
    const refresh=maskDirty||headY!==lastPaintHead||scrollY!==lastPaintScroll||(animated&&stamp-lastShape>=33);
    if(refresh){
     paintMask(time);lastShape=stamp;
@@ -358,7 +370,7 @@
     lastPaintHead=headY;lastPaintScroll=scrollY;maskDirty=false;maskPaints++;
     canvas.dataset.head=String(headY);canvas.dataset.end=String(endY);canvas.dataset.merge=String(mergeY);canvas.dataset.diameter=String(trunkDiameter);canvas.dataset.clip=String(clipY);canvas.dataset.drops=String(dropletCount);canvas.dataset.branches=String(fronts(headY).length);ending.dataset.spread=String(spread);
    }
-   if(optics)optics.render(mask,dpr,{time,docY:scrollY,refresh,end:[endX,endY],spread});
+   if(optics)optics.render(mask,dpr,{time,docY:scrollY,refresh,end:[endX,endY],head:headY,spread});
    else if(refresh){
     ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);
     tintedMask('#c8d5d7',.055);tintedMask('#71898d',.33,1.5,true);tintedMask('#ffffff',.85,-1.7,true);
@@ -366,7 +378,8 @@
     for(const r of obstacles){if(r.y+r.h>scrollY&&r.y<scrollY+height)ctx.fillRect(r.x,r.y-scrollY,r.w,r.h);}
     ctx.globalCompositeOperation='source-over';
    }
-   draws++;
+   draws++;canvas.dataset.motion=staticMode()?'static':surfaceMotion()?'flow':'scroll';
+   canvas.dataset.draws=String(draws);
    if(animated&&scrollY<clipY&&headY>scrollY-160&&!document.querySelector('dialog[open]'))raf=requestAnimationFrame(draw);
   }
   function schedule(layout=false){if(dead)return;pendingInput=true;if(layout)dirty=true;if(!raf)raf=requestAnimationFrame(draw);}

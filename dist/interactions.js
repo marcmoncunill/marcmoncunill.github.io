@@ -181,7 +181,9 @@ function slowProjectWheel(event){
 }
 window.addEventListener('wheel',slowProjectWheel,{passive:false});
 
-function render(){
+let routeSerial=0;
+async function render(){
+  const routeToken=++routeSerial;
   stopA3Wheel();
   const hash=location.hash;
   const id=hash.match(/^#\/(?:project|experimentacio)\/([^/]+)/)?.[1];
@@ -189,6 +191,12 @@ function render(){
   const isPublication=hash.startsWith('#/experimentacio/nous-materials');
   const view=isPublication?'publication':p?p.id:'home';
   if(hasRendered&&view===currentView){scrollToDestination(true);markNavigation();scheduleScroll();return;}
+  let preparedShadow=null;
+  if(p?.id==='the-shadow-set'&&window.portfolioShadowEntry?.prepareEntry){
+    const template=document.createElement('template');template.innerHTML=projectDetail(p,productProjects.indexOf(p));
+    preparedShadow=await window.portfolioShadowEntry.prepareEntry(template.content.firstElementChild,()=>routeToken===routeSerial);
+    if(routeToken!==routeSerial){preparedShadow?.destroy();return;}
+  }
   window.portfolioCover?.unmount();
   window.portfolioFeatured?.unmount();
   window.portfolioEVDetail?.unmount();
@@ -198,16 +206,17 @@ function render(){
   mirrorMotionCleanup?.();mirrorMotionCleanup=null;
   routeAnimation?.cancel();
   document.body.classList.toggle('project-page',!!p||isPublication);
-  main.innerHTML=isPublication?publication():p?(p.id==='a3-collection'?a3():projectDetail(p,productProjects.indexOf(p))):home();
+  if(preparedShadow){main.replaceChildren(preparedShadow.article);preparedShadow.host.remove();}
+  else main.innerHTML=isPublication?publication():p?(p.id==='a3-collection'?a3():projectDetail(p,productProjects.indexOf(p))):home();
   document.title=isPublication?`${publicationTitle} — Marc Moncunill`:p?`${p.title} — Marc Moncunill`:'Marc Moncunill — Product Design Portfolio';
   reserveImageDimensions();setupGravity();window.portfolioCover?.mount();window.portfolioFeatured?.mount();
   if(p?.id==='mirall-fusta')setupMirrorMotion();
-  if(p?.id==='the-shadow-set'){showShadowPage(shadowPage);window.portfolioShadowEntry?.mount();}
+  if(p?.id==='the-shadow-set'){showShadowPage(shadowPage);window.portfolioShadowEntry?.mount(preparedShadow);}
   if(isPublication)showPublicationPage(publicationPage);
   scrollToDestination(hasRendered);setupReveals();markNavigation();updateScroll();
   if(p?.id==='ev-charger'){window.portfolioEVDetail?.mount();window.portfolioDock?.mount();}
   if(p?.id==='a3-collection')window.portfolioA3Water?.mount();
-  if(hasRendered&&p?.id!=='ev-charger'&&!reducedMotion&&main.animate){
+  if(hasRendered&&p?.id!=='ev-charger'&&p?.id!=='the-shadow-set'&&!reducedMotion&&main.animate){
     routeAnimation=main.animate([{opacity:.7,transform:'translateY(6px)'},{opacity:1,transform:'translateY(0)'}],{duration:220,easing:'cubic-bezier(.22,1,.36,1)'});
   }
   currentView=view;hasRendered=true;
