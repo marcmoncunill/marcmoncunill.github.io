@@ -28,7 +28,7 @@ function sectionFromHash(hash=location.hash){
 
 function scrollToDestination(focus=false,smooth=false){
   const section=sectionFromHash();
-  const target=section?document.getElementById(section):location.hash.endsWith('/lectura')?document.querySelector('.publication-controls'):null;
+  const target=section?document.getElementById(section):(window.portfolioWorkshops?.destination(location.hash)||(location.hash.endsWith('/lectura')?document.querySelector('.publication-controls'):null));
   if(target)target.scrollIntoView({behavior:smooth&&!reducedMotion?'smooth':'instant',block:'start'});
   else window.scrollTo({top:0,behavior:smooth&&!reducedMotion?'smooth':'instant'});
   if(focus)focusContent(target?.querySelector('h2')||target||main.querySelector('h1')||main);
@@ -187,7 +187,7 @@ async function render(){
   stopA3Wheel();
   const hash=location.hash;
   const id=hash.match(/^#\/(?:project|experimentacio)\/([^/]+)/)?.[1];
-  const p=projects.find(item=>item.id===id);
+  const p=projects.find(item=>item.id===id)||window.portfolioWorkshops?.items.find(item=>item.id===id);
   const isPublication=hash.startsWith('#/experimentacio/nous-materials');
   const view=isPublication?'publication':p?p.id:'home';
   if(hasRendered&&view===currentView){scrollToDestination(true);markNavigation();scheduleScroll();return;}
