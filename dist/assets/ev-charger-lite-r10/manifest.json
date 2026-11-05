@@ -1,0 +1,23 @@
+{
+  "version": "Amazon Dock v05 - optimized runtime r10",
+  "project_id": "ev-charger",
+  "frame_count": 360,
+  "fps": 30,
+  "duration_seconds": 12,
+  "poster": "poster.webp",
+  "source_version": "reference-studio-approved",
+  "tiers": {
+    "mobile": {
+      "directory": "frames/default",
+      "width": 1120,
+      "height": 630,
+      "count": 360
+    },
+    "desktop": {
+      "directory": "frames/large",
+      "width": 1920,
+      "height": 1080,
+      "count": 360
+    }
+  }
+}

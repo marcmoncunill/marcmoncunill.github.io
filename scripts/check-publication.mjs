@@ -60,6 +60,17 @@ export function checkPublication(){
   }
  }
  if(bytes>1024**3)errors.push('Static artifact exceeds the GitHub Pages site limit.');
+ const liteManifest='assets/ev-charger-lite-r10/manifest.json';
+ if(fs.readFileSync(path.join(dist,'ev-detail.js'),'utf8').includes('assets/ev-charger-lite-r10/')&&!paths.has(liteManifest))errors.push('Missing optimized EV runtime manifest.');
+ if(paths.has(liteManifest)){
+  const lite=JSON.parse(fs.readFileSync(path.join(dist,liteManifest),'utf8'));
+  if(lite.project_id!=='ev-charger'||lite.frame_count!==360)errors.push('Unexpected optimized EV sequence.');
+  checkRef(liteManifest,lite.poster);
+  for(const name of ['mobile','desktop']){
+   const tier=lite.tiers[name];if(!tier){errors.push(`Missing optimized EV tier: ${name}`);continue;}
+   for(let n=1;n<=lite.frame_count;n++)checkRef(liteManifest,`${tier.directory}/${String(n).padStart(4,'0')}.webp`);
+  }
+ }
  const tracked=spawnSync('git',['ls-files','-z'],{cwd:root,encoding:'utf8'});
  if(tracked.status===0)for(const name of tracked.stdout.split('\0').filter(Boolean)){
   const allowed=/^(?:dist\/|\.github\/|\.githooks\/|scripts\/(?:serve\.mjs|build-responsive-images\.py|check-publication\.mjs|publication\.mjs|guard-push\.mjs)$|(?:\.gitignore|\.gitattributes|AGENTS\.md|README\.md|PUBLICACIO\.md|publication\.config\.json|package\.json|SOURCE-MANIFEST-V29\.json|OBRIR-PORTAFOLI\.cmd)$)/.test(name);

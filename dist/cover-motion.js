@@ -19,7 +19,15 @@
   const header=document.querySelector('.site-header');
   const cache=new Map();
   const debug=new URLSearchParams(location.search).get('cover-debug')==='on',trace=[];
-  let alive=true,raf=0,desired=0,shown=0,requested=0,smoothed=NaN,lastTime=0,target=0,enabled=true,inFlight=0,retry=0;
+  let alive=true,raf=0,desired=0,shown=0,requested=0,smoothed=NaN,lastTime=0,target=0,enabled=true,inFlight=0,retry=0,lastDirection=1;
+  function prefetch(){
+   if(!alive||!shown||desired!==shown)return;
+   for(const offset of [1,2,3,4,5,6,7,8,-1,-2,-3,-4]){
+    const n=shown+offset*lastDirection;
+    if(n<1||n>media.frames||cache.has(n)||inFlight>=3)continue;
+    load(n).then(prefetch).catch(()=>{}).finally(()=>{if(alive)display(desired);});
+   }
+  }
 
   function load(index){
    if(cache.has(index)){const value=cache.get(index);cache.delete(index);cache.set(index,value);return value.promise;}
@@ -48,12 +56,11 @@
     // request. Cold images cannot stall playback or arrive out of order.
     const direction=Math.sign(desired-shown);
     if(!direction||(index-shown)*direction<=0||(desired-index)*direction<0)return;
-    pictures.forEach(image=>{image.src=source(index);});shown=index;scene.dataset.frame=String(index);
+    pictures.forEach(image=>{image.src=source(index);});shown=index;lastDirection=direction;scene.dataset.frame=String(index);
+    delete scene.dataset.frameError;
     paint((index-1)/(media.frames-1));
     if(debug){trace.push({frame:index,time:Math.round(performance.now()),target});if(trace.length>40)trace.shift();scene.dataset.frameTrace=JSON.stringify(trace);}
-    for(const offset of [direction,direction*2,direction*3,direction*4,-direction,-direction*2]){
-     const n=index+offset;if(n>=1&&n<=media.frames&&(cache.has(n)||inFlight<3))load(n).catch(()=>{}).finally(()=>{if(alive)display(desired);});
-    }
+    prefetch();
    }).catch(error=>{if(alive){if(requested===index)requested=0;if(error.name!=='AbortError'){scene.dataset.frameError=String(index);clearTimeout(retry);retry=setTimeout(()=>display(desired),600);}}}).finally(()=>{if(alive&&desired!==shown&&desired!==index)display(desired);});
   }
   function fit(){
@@ -83,7 +90,7 @@
    // Smooth only the visual playhead. Native wheel, touch, scrollbar and anchors
    // keep their normal scrolling, with exact endpoints before the sticky release.
    if(!Number.isFinite(smoothed)||!enabled||target===0||target===1)smoothed=target;
-   else smoothed+=(target-smoothed)*(1-Math.exp(-dt/(preference.matches?60:110)));
+   else smoothed+=(target-smoothed)*(1-Math.exp(-dt/(preference.matches?45:75)));
    if(Math.abs(target-smoothed)<.00001)smoothed=target;
    scene.dataset.targetProgress=target.toFixed(4);
    const inCover=rect.bottom>110&&rect.top<innerHeight;

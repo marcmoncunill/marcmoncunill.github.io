@@ -1,6 +1,6 @@
 /* Deterministic v05 frames on native reversible scroll; no wheel/touch capture. */
 (()=>{
- const base='assets/ev-charger-v05-referencia/';
+ const base='assets/ev-charger-lite-r10/';
  let clean=null;
  function unmount(){clean?.();clean=null;}
  function mount(){
@@ -18,7 +18,7 @@
   const manifestRequest=new AbortController();
   let alive=true,enabled=true,mediaFailed=false,manifest=null,tier=null,limit=0,manifestLoading=false,lastRecovery=0,recoveryTimer=0;
   const media=window.portfolioMotionMedia;
-  let raf=0,desired=1,shown=0,queue=[],posterReady=false,painted=false,cursor=1,lastStamp=0,rawTarget=1;
+  let raf=0,desired=1,shown=0,queue=[],posterReady=false,painted=false,cursor=1,lastStamp=0,rawTarget=1,queuedFrame=0;
   const reduced=matchMedia('(prefers-reduced-motion:reduce)');
   const debug=new URLSearchParams(location.search).get('ev-debug')==='on',trace=[];
 
@@ -30,14 +30,14 @@
   function close(image){image?.close?.();}
   function trim(){
    while(cache.size>limit){
-    const candidate=[...cache.keys()].filter(n=>n!==shown&&n!==desired).sort((a,b)=>Math.abs(b-desired)-Math.abs(a-desired))[0];
+    const candidate=[...cache.keys()].filter(n=>n!==shown&&n!==desired&&n!==queuedFrame).sort((a,b)=>Math.abs(b-desired)-Math.abs(a-desired))[0];
     if(candidate===undefined)break;
     close(cache.get(candidate));cache.delete(candidate);
    }
    diagnostics();
   }
   function resetLoads(){
-   queue=[];
+   queue=[];queuedFrame=0;
    pending.forEach(controller=>controller.abort());pending.clear();
    cache.forEach(close);cache.clear();diagnostics();
   }
@@ -76,10 +76,16 @@
    stage.classList.add('has-canvas');painted=true;
   }
   function drawPoster(){if(posterReady)draw(poster,1);}
-  function show(index,image){
+  function show(index){
+   const anchor=queuedFrame||shown,direction=Math.sign(desired-anchor);
+   if(index===desired||direction&&(index-anchor)*direction>0&&(desired-index)*direction>=0){queuedFrame=index;schedule();}
+  }
+  function paintQueued(){
+   if(!queuedFrame)return;
+   const index=queuedFrame,image=cache.get(index);queuedFrame=0;if(!image)return;
    draw(image,index);shown=index;scene.dataset.frame=String(index);
    if(debug){trace.push({frame:index,target:rawTarget,at:Math.round(performance.now())});if(trace.length>60)trace.shift();scene.dataset.trace=JSON.stringify(trace);}
-   status.textContent='';delete scene.dataset.frameError;clearTimeout(recoveryTimer);recoveryTimer=0;trim();schedule();
+   status.textContent='';delete scene.dataset.frameError;clearTimeout(recoveryTimer);recoveryTimer=0;trim();
   }
   function plan(){
    const direction=Math.sign(desired-shown)||1;
@@ -101,7 +107,7 @@
       if(!alive||!enabled||controller.signal.aborted||Math.abs(index-desired)>40){close(image);return;}
       cache.set(index,image);
       const direction=Math.sign(desired-shown);
-      if(index===desired||direction&&(index-shown)*direction>0&&(desired-index)*direction>=0)show(index,image);
+      if(index===desired||direction&&(index-shown)*direction>0&&(desired-index)*direction>=0)show(index);
       trim();
      })
      .catch(error=>{
@@ -125,11 +131,11 @@
    for(const [n,controller] of pending)if(Math.abs(n-index)>40){controller.abort();pending.delete(n);}
    if(cache.has(index)){
     const image=cache.get(index);cache.delete(index);cache.set(index,image);
-    if(shown!==index)show(index,image);
+    if(shown!==index)show(index);
    }else{
     const direction=Math.sign(index-shown);
     const nearest=[...cache.keys()].filter(n=>(n-shown)*direction>0&&(index-n)*direction>=0).sort((a,b)=>Math.abs(a-index)-Math.abs(b-index))[0];
-    if(nearest!==undefined)show(nearest,cache.get(nearest));
+    if(nearest!==undefined)show(nearest);
    }
    plan();
   }
@@ -159,19 +165,22 @@
    if(enabled&&manifest&&tier&&rect.top<innerHeight&&rect.bottom>0){
     rawTarget=1+progress*(manifest.frame_count-1);
     const delta=lastStamp?Math.min(64,Math.max(1,stamp-lastStamp)):16;lastStamp=stamp;
-    const response=reduced.matches?45:85;
+    const response=reduced.matches?35:65;
     cursor=cursor+(rawTarget-cursor)*(1-Math.exp(-delta/response));
     if(Math.abs(rawTarget-cursor)<.08)cursor=rawTarget;
     scene.dataset.rawTargetFrame=String(Math.round(rawTarget));
     request(Math.max(1,Math.min(manifest.frame_count,Math.round(cursor))));
     if(cursor!==rawTarget)schedule();
    }else lastStamp=0;
+   // Several fetches can finish in one task. Paint only the most useful frame
+   // once per screen refresh, instead of uploading each intermediate bitmap.
+   paintQueued();
   }
   function schedule(){if(alive&&!raf)raf=requestAnimationFrame(update);}
   function fit(){
    const w=stage.clientWidth,h=stage.clientHeight;
    // The viewport does not need a retina 4K drawing surface for every scroll tick.
-   const ratio=Math.min(devicePixelRatio||1,1.25,Math.sqrt(1920*1080/Math.max(1,w*h)));
+   const ratio=Math.min(devicePixelRatio||1,1,Math.sqrt(1600*900/Math.max(1,w*h)));
    const width=Math.max(1,Math.round(w*ratio)),height=Math.max(1,Math.round(h*ratio));
    if(canvas.width!==width||canvas.height!==height){
     canvas.width=width;canvas.height=height;
@@ -207,12 +216,12 @@
     if(!alive)return;
     manifest=data;
     const constrained=navigator.connection?.saveData||(navigator.deviceMemory||8)<4;
-    // Use the existing corrected 720p sequence on phones and ordinary laptops;
-    // reserve 1440p for genuinely large stages. The 4K masters stay untouched.
+    // Moderately smaller derivatives of the corrected v05 render. The original
+    // frames, camera, materials, LED and all 360 sequence positions stay intact.
     const width=Math.max(stage.clientWidth,stage.clientHeight*16/9);
     const name=constrained||stage.clientWidth<=700||width<=1920?'mobile':'desktop';
     tier=manifest.tiers[name];scene.dataset.tier=name;
-    limit=Math.max(3,Math.min(20,Math.floor(72*1024*1024/(tier.width*tier.height*4))));
+    limit=Math.max(3,Math.min(20,Math.floor(56*1024*1024/(tier.width*tier.height*4))));
     mediaFailed=false;scene.dataset.cacheLimit=String(limit);mode();
    })
    .catch(error=>{
