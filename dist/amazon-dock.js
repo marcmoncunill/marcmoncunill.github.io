@@ -35,7 +35,7 @@
   const context=canvas.getContext('2d',{alpha:true}),mobile=matchMedia('(max-width:700px)').matches;
   const tier=mobile?'mobile':'desktop',width=mobile?480:720,height=mobile?280:421;
   canvas.width=width;canvas.height=height;handle.dataset.handleTier=tier;
-  const sheets=new Map(),pending=new Map(),loaded=new Set();
+  const sheets=new Map(),pending=new Map(),loaded=new Set(),retryAt=new Map();
   let visible=false,failed=!context,phase=0,lastTime=0,playFrame=0,painted=0,wantedGroup=0;
   // This small product turntable is always automatic. Only invisible work stops.
   const eligible=()=>alive&&!failed&&visible&&!document.hidden;
@@ -43,19 +43,18 @@
   function release(bitmap){bitmap.close?.();}
   function trim(){const keep=new Set([wantedGroup,(wantedGroup+1)%40]);for(const [key,bitmap] of sheets)if(!keep.has(key)){release(bitmap);sheets.delete(key);}}
   async function decode(blob){
-   if(typeof createImageBitmap==='function')return createImageBitmap(blob);
-   const url=URL.createObjectURL(blob),img=new Image();try{img.src=url;await img.decode();return img;}finally{URL.revokeObjectURL(url);}
+   return window.portfolioMotionMedia.decodeImage(blob);
   }
   function loadSheet(group){
-   if(!eligible()||sheets.has(group)||pending.has(group)||pending.size>=2)return;
+   if(!eligible()||sheets.has(group)||pending.has(group)||pending.size>=2||performance.now()<(retryAt.get(group)||0))return;
    const url='assets/amazon-dock/manec-360-png/'+tier+'/sheet-'+String(group).padStart(2,'0')+'.png'; // taste-skill-ignore: zero-padding is an asset filename, never a visible label.
    const task=(async()=>{
-    const response=await fetch(url,{signal:controller.signal,cache:'force-cache'});if(!response.ok)throw new Error('PNG '+response.status);
-    const bitmap=await decode(await response.blob());if(!alive){release(bitmap);return;}
+    const bitmap=await window.portfolioMotionMedia.read(url,{signal:controller.signal,consume:async response=>decode(await response.blob())});if(!alive){release(bitmap);return;}
+    retryAt.delete(group);
     sheets.set(group,bitmap);loaded.add(group);trim();stats();
    })();
    pending.set(group,task);stats();
-   task.catch(error=>{if(alive&&error.name!=='AbortError'){failed=true;handle.classList.remove('has-frames');updateHandle();}}).finally(()=>{pending.delete(group);if(alive){stats();prefetch(wantedGroup);}});
+   task.catch(error=>{if(alive&&error.name!=='AbortError'){retryAt.set(group,performance.now()+3000);handle.dataset.handleState='recovering';}}).finally(()=>{pending.delete(group);if(alive){stats();prefetch(wantedGroup);}});
   }
   function prefetch(group){wantedGroup=group;if(!eligible())return;trim();loadSheet(group);loadSheet((group+1)%40);}
   function tick(now){
@@ -75,6 +74,7 @@
    prefetch(Math.floor(Math.floor(phase)/6));if(!playFrame)playFrame=requestAnimationFrame(tick);
   }
   document.addEventListener('visibilitychange',updateHandle,{signal:controller.signal});
+  window.addEventListener('online',()=>{retryAt.clear();updateHandle();},{signal:controller.signal});
   let visibilityFrame=0;
   function measureHandle(){
    visibilityFrame=0;if(!alive)return;const rect=handle.getBoundingClientRect();

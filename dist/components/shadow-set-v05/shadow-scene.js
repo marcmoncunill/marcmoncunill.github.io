@@ -83,7 +83,7 @@ class ShadowSet {
     this.paused=false;this.destroyed=false;this.visible=true;this.time=0;
     this.stats={pieceCollisions:0,boundaryCollisions:0,pointerPushes:0,frames:0};
     this.motionQuery=matchMedia('(prefers-reduced-motion: reduce)');
-    this.reducedMotion=this.motionQuery.matches;
+    this.reducedMotion=config.autoMotion?false:this.motionQuery.matches;
     this.engine=Engine.create({gravity:{x:0,y:0},positionIterations:8,velocityIterations:8,enableSleeping:false});
     this.scene=new THREE.Scene();this.scene.background=new THREE.Color(config.background);
     this.camera=new THREE.PerspectiveCamera(32,1,.1,3000);
@@ -123,6 +123,7 @@ class ShadowSet {
     on(this.stage,'blur',()=>{this.keyboardCursor.hidden=true;this.pointer.active=false;});
     on(document,'visibilitychange',()=>{this.visible=!document.hidden;this.lastFrame=0;this.accumulator=0;});
     on(this.motionQuery,'change',e=>{
+      if(this.config.autoMotion)return;
       this.reducedMotion=e.matches;
       for(const item of this.items){Body.setVelocity(item.body,{x:0,y:0});Body.setAngularVelocity(item.body,0);}
     });
@@ -364,6 +365,7 @@ class ShadowSet {
     if(this.destroyed)return;
     this.raf=requestAnimationFrame(this.tick);
     if(!this.visible||!this.inView){this.lastFrame=0;return;}
+    if(this.lastFrame&&now-this.lastFrame<1000/(this.config.maxFps||60)-.5)return;
     const dt=this.lastFrame?Math.min(now-this.lastFrame,50):0;this.lastFrame=now;
     if(!this.paused){
       this.accumulator+=dt;

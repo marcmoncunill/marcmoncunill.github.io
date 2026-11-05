@@ -1,8 +1,7 @@
 /* Local feature interaction, mounted and released with the existing router. */
 (()=>{
  let clean=null;
- const query=new URLSearchParams(location.search).get('ev-motion');
- let choice=query==='on'?true:query==='off'?false:null;
+ let choice=true;
  function unmount(){clean?.();clean=null;}
  function mount(){
   unmount();
@@ -25,7 +24,7 @@
   function schedule(){if(alive&&!frame)frame=requestAnimationFrame(update);}
   function onScroll(){if(visible)schedule();}
   function sync(){
-   enabled=choice??!preference.matches;
+   enabled=choice;
    scene.dataset.motion=enabled?'on':'off';
    control.setAttribute('aria-pressed',String(enabled));
    control.setAttribute('aria-label',enabled?'Atura el moviment d’Amazon Dock':'Activa el moviment d’Amazon Dock');
@@ -40,7 +39,7 @@
   }
   function onLeave(){x=0;y=0;schedule();}
   function toggle(){choice=!enabled;sync();}
-  function onPreference(){choice=null;sync();}
+  function onPreference(){schedule();}
   const observer=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;schedule();},{rootMargin:'120px'});
   observer.observe(scene);
   scene.addEventListener('pointermove',onMove,{passive:true});
@@ -49,7 +48,7 @@
   preference.addEventListener('change',onPreference);
   window.addEventListener('scroll',onScroll,{passive:true});
   window.addEventListener('resize',schedule,{passive:true});
-  sync();
+  choice=true;sync();
   clean=()=>{
    alive=false;cancelAnimationFrame(frame);observer.disconnect();
    scene.removeEventListener('pointermove',onMove);scene.removeEventListener('pointerleave',onLeave);

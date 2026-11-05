@@ -26,16 +26,16 @@
  float edge(vec2 p,vec2 d){
   float lo=0.,hi=1.;
   for(int i=0;i<8;i++){if(field(p+d*hi*uScale)<.48)break;lo=hi;hi*=2.;}
-  for(int i=0;i<6;i++){float mid=(lo+hi)*.5;if(field(p+d*mid*uScale)>.48)lo=mid;else hi=mid;}
+  for(int i=0;i<4;i++){float mid=(lo+hi)*.5;if(field(p+d*mid*uScale)>.48)lo=mid;else hi=mid;}
   return (lo+hi)*.5;
  }
  void main(){
   vec4 cover=texture(uMask,vUV);
   if(cover.a<.015||cover.g<.01)discard;
   vec2 p=vUV*uSize;
-  vec2 dirs[8]=vec2[8](vec2(1.,0.),vec2(.707,.707),vec2(0.,1.),vec2(-.707,.707),vec2(-1.,0.),vec2(-.707,-.707),vec2(0.,-1.),vec2(.707,-.707));
+  vec2 dirs[4]=vec2[4](vec2(1.,0.),vec2(0.,1.),vec2(-1.,0.),vec2(0.,-1.));
   float nearest=100.;vec2 direction=vec2(1.,0.);vec2 gradient=vec2(0.);
-  for(int j=0;j<8;j++){
+  for(int j=0;j<4;j++){
    float e=edge(p,dirs[j]);
    gradient+=dirs[j]/pow(max(.5,e),3.);
    if(e<nearest){nearest=e;direction=dirs[j];}

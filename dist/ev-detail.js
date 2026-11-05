@@ -16,7 +16,8 @@
   const samples=document.createElement('canvas');samples.width=4;samples.height=1;
   const sampleContext=samples.getContext('2d',{willReadFrequently:true});
   const manifestRequest=new AbortController();
-  let alive=true,enabled=true,mediaFailed=false,manifest=null,tier=null,limit=0;
+  let alive=true,enabled=true,mediaFailed=false,manifest=null,tier=null,limit=0,manifestLoading=false,lastRecovery=0,recoveryTimer=0;
+  const media=window.portfolioMotionMedia;
   let raf=0,desired=1,shown=0,queue=[],posterReady=false,painted=false,cursor=1,lastStamp=0,rawTarget=1;
   const reduced=matchMedia('(prefers-reduced-motion:reduce)');
   const debug=new URLSearchParams(location.search).get('ev-debug')==='on',trace=[];
@@ -78,11 +79,12 @@
   function show(index,image){
    draw(image,index);shown=index;scene.dataset.frame=String(index);
    if(debug){trace.push({frame:index,target:rawTarget,at:Math.round(performance.now())});if(trace.length>60)trace.shift();scene.dataset.trace=JSON.stringify(trace);}
-   status.textContent='';trim();schedule();
+   status.textContent='';delete scene.dataset.frameError;clearTimeout(recoveryTimer);recoveryTimer=0;trim();schedule();
   }
   function plan(){
    const direction=Math.sign(desired-shown)||1;
-   queue=[desired,...Array.from({length:12},(_,i)=>desired+(i+1)*direction),...Array.from({length:6},(_,i)=>desired-(i+1)*direction)]
+   const ahead=Math.min(12,Math.ceil((limit-2)*.7)),behind=Math.min(6,limit-2-ahead);
+   queue=[desired,...Array.from({length:ahead},(_,i)=>desired+(i+1)*direction),...Array.from({length:behind},(_,i)=>desired-(i+1)*direction)]
     .filter((n,i,items)=>n>=1&&n<=manifest.frame_count&&items.indexOf(n)===i&&!cache.has(n)&&!pending.has(n)&&!failed.has(n));
    pump();
   }
@@ -91,9 +93,10 @@
    while(pending.size<3&&queue.length){
     const index=queue.shift(),controller=new AbortController();
     pending.set(index,controller);diagnostics();
-    fetch(base+tier.directory+'/'+String(index).padStart(4,'0')+'.webp',{signal:controller.signal,cache:'force-cache'})
-     .then(response=>{if(!response.ok)throw new Error('Frame unavailable');return response.blob();})
-     .then(blob=>createImageBitmap(blob))
+    media.read(base+tier.directory+'/'+String(index).padStart(4,'0')+'.webp',{
+      signal:controller.signal,consume:async response=>media.decodeImage(await response.blob()),
+      onRetry:()=>{scene.dataset.retries=String(Number(scene.dataset.retries||0)+1);}
+     })
      .then(image=>{
       if(!alive||!enabled||controller.signal.aborted||Math.abs(index-desired)>40){close(image);return;}
       cache.set(index,image);
@@ -105,7 +108,10 @@
       if(!alive||controller.signal.aborted||error.name==='AbortError')return;
       failed.add(index);scene.dataset.frameError=String(index);
       if(!painted)drawPoster();
-      if(!shown&&index===desired){mediaFailed=true;mode();status.textContent='La seqüència no està disponible. Pots continuar amb el projecte.';}
+      // Keep the poster and other frames usable. One failed frame must never
+      // disable the complete scroll sequence for the remainder of the visit.
+      if(!shown&&index===desired)status.textContent='Carregant la seqüència…';
+      if(index===desired||!shown)retryLater();
      })
      .finally(()=>{
       if(pending.get(index)===controller)pending.delete(index);
@@ -115,6 +121,7 @@
   }
   function request(index){
    desired=index;scene.dataset.targetFrame=String(index);
+   if(failed.has(index)&&performance.now()-lastRecovery>5000){failed.delete(index);lastRecovery=performance.now();}
    for(const [n,controller] of pending)if(Math.abs(n-index)>40){controller.abort();pending.delete(n);}
    if(cache.has(index)){
     const image=cache.get(index);cache.delete(index);cache.set(index,image);
@@ -128,6 +135,7 @@
   }
   function update(stamp=performance.now()){
    raf=0;if(!alive)return;
+   if(!manifest&&!manifestLoading&&stamp-lastRecovery>5000){lastRecovery=stamp;loadManifest();}
    const rect=scene.getBoundingClientRect(),hold=scene.offsetHeight-stage.offsetHeight;
    const offset=Math.max(0,-rect.top);
    const whiteHold=Math.min(hold,stage.offsetHeight*.9);
@@ -172,14 +180,14 @@
    schedule();
   }
   function mode(){
-   enabled=!mediaFailed&&!!context&&typeof createImageBitmap==='function';
+   enabled=!mediaFailed&&!!context;
    scene.dataset.motion=enabled?'on':'off';
    if(!enabled){resetLoads();shown=0;scene.dataset.frame='1';drawPoster();}
    fit();update();
   }
   function visibility(){
    if(document.hidden){cancelAnimationFrame(raf);raf=0;resetLoads();}
-   else{fit();schedule();}
+   else{if(!manifest)loadManifest();fit();schedule();}
   }
   function posterLoaded(){
    if(!alive)return;posterReady=true;
@@ -192,8 +200,9 @@
   document.addEventListener('visibilitychange',visibility);
   const observer=new ResizeObserver(fit);observer.observe(stage);
   mode();
-  fetch(base+'manifest.json',{signal:manifestRequest.signal})
-   .then(response=>{if(!response.ok)throw new Error('Manifest unavailable');return response.json();})
+  function loadManifest(){
+   if(!alive||manifest||manifestLoading)return;manifestLoading=true;
+   media.read(base+'manifest.json',{signal:manifestRequest.signal,consume:response=>response.json()})
    .then(data=>{
     if(!alive)return;
     manifest=data;
@@ -203,18 +212,28 @@
     const width=Math.max(stage.clientWidth,stage.clientHeight*16/9);
     const name=constrained||stage.clientWidth<=700||width<=1920?'mobile':'desktop';
     tier=manifest.tiers[name];scene.dataset.tier=name;
-    limit=Math.max(2,Math.min(20,Math.floor(72*1024*1024/(tier.width*tier.height*4))));
-    scene.dataset.cacheLimit=String(limit);schedule();
+    limit=Math.max(3,Math.min(20,Math.floor(72*1024*1024/(tier.width*tier.height*4))));
+    mediaFailed=false;scene.dataset.cacheLimit=String(limit);mode();
    })
    .catch(error=>{
     if(!alive||error.name==='AbortError')return;
-    mediaFailed=true;mode();status.textContent='Pots continuar amb les imatges i l’explicació del projecte.';
-   });
+    mediaFailed=true;mode();status.textContent='Pots continuar amb les imatges i l’explicació del projecte.';retryLater();
+   }).finally(()=>{manifestLoading=false;});
+  }
+  function retryLater(){
+   if(!alive||recoveryTimer||document.hidden)return;
+   const rect=scene.getBoundingClientRect();if(rect.top>=innerHeight||rect.bottom<=0)return;
+   recoveryTimer=setTimeout(()=>{recoveryTimer=0;recover();},3000);
+  }
+  function recover(){if(!alive)return;clearTimeout(recoveryTimer);recoveryTimer=0;failed.clear();if(!manifest)loadManifest();else{mediaFailed=false;mode();}}
+  window.addEventListener('online',recover);window.addEventListener('focus',recover);
+  loadManifest();
   clean=()=>{
-   alive=false;manifestRequest.abort();cancelAnimationFrame(raf);resetLoads();observer.disconnect();
+   alive=false;clearTimeout(recoveryTimer);manifestRequest.abort();cancelAnimationFrame(raf);resetLoads();observer.disconnect();
    poster.removeEventListener('load',posterLoaded);
    window.removeEventListener('scroll',schedule);window.removeEventListener('resize',fit);
    document.removeEventListener('visibilitychange',visibility);
+   window.removeEventListener('online',recover);window.removeEventListener('focus',recover);
    header.classList.remove('is-ev-immersive','is-ev-light');document.body.classList.remove('ev-detail-active');
    header.style.removeProperty('--ev-detail-logo-ink');header.style.removeProperty('--ev-detail-nav-ink');
    article.style.removeProperty('--ev-content-reveal');

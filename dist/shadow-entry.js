@@ -5,7 +5,7 @@
  const lifecycle={mounts:0,destroys:0};
  let pointerEvents={moves:0,downs:0,last:null};
  function prepare(){
-  if(!componentPromise)componentPromise=import('./components/shadow-set-v05/shadow-scene.js?v=entry-2').catch(error=>{componentPromise=null;throw error;});
+  if(!componentPromise)componentPromise=import('./components/shadow-set-v05/shadow-scene.js?v=entry-3').catch(error=>{componentPromise=null;throw error;});
   return componentPromise;
  }
  function models(){
@@ -32,7 +32,7 @@
   try{
    const [{createShadowSet},data]=await warm();
    if(!isCurrent()){host.remove();return null;}
-   scene=await createShadowSet(article.querySelector('.shadow-hero'),{models:data});
+   scene=await createShadowSet(article.querySelector('.shadow-hero'),{models:data,autoMotion:true,maxFps:30,maxPixelRatio:1.2});
    if(!isCurrent()){scene.destroy();host.remove();return null;}
    // reset() already rendered the original CAD, material and initial physics.
    article.querySelector('.shadow-hero').dataset.entryState='ready';
@@ -63,7 +63,7 @@
   try{
    if(prepared?.error)throw prepared.error;
    let scene=prepared?.scene;
-   if(!scene){const [{createShadowSet},data]=await warm();if(token!==serial||!root.isConnected)return;scene=await createShadowSet(root,{models:data});}
+   if(!scene){const [{createShadowSet},data]=await warm();if(token!==serial||!root.isConnected)return;scene=await createShadowSet(root,{models:data,autoMotion:true,maxFps:30,maxPixelRatio:1.2});}
    if(token!==serial||!root.isConnected){scene.destroy();return;}
    active=scene;lifecycle.mounts++;pointerEvents={moves:0,downs:0,last:null};
    controlsAbort=new AbortController();const signal=controlsAbort.signal;

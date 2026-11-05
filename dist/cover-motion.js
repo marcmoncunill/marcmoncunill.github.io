@@ -2,12 +2,8 @@
 (() => {
  const media=window.coverMedia;
  const preference=matchMedia('(prefers-reduced-motion: reduce)');
- const query=new URLSearchParams(location.search).get('motion');
- const preferenceKey='portfolio-cover-motion';
- let saved=null;try{saved=localStorage.getItem(preferenceKey);}catch{}
- let choice=query==='on'?true:query==='off'?false:saved==='on'?true:saved==='off'?false:null;
- function remember(){try{localStorage.setItem(preferenceKey,choice?'on':'off');}catch{}}
- if(query==='on'||query==='off')remember();
+ // Every entry starts active. An old saved pause is not a loading preference.
+ let choice=true;
  let clean=null;
  const source=index=>media.directory+'frame-'+String(index).padStart(3,'0')+'.webp';
 
@@ -23,19 +19,27 @@
   const header=document.querySelector('.site-header');
   const cache=new Map();
   const debug=new URLSearchParams(location.search).get('cover-debug')==='on',trace=[];
-  let alive=true,raf=0,desired=0,shown=0,requested=0,smoothed=NaN,lastTime=0,target=0,enabled=choice??!preference.matches;
+  let alive=true,raf=0,desired=0,shown=0,requested=0,smoothed=NaN,lastTime=0,target=0,enabled=true,inFlight=0,retry=0;
 
   function load(index){
    if(cache.has(index)){const value=cache.get(index);cache.delete(index);cache.set(index,value);return value.promise;}
-   const image=new Image();image.decoding='async';
-   const promise=new Promise((resolve,reject)=>{image.onload=()=>{if(image.decode)image.decode().catch(()=>{}).then(()=>resolve(image));else resolve(image);};image.onerror=reject;});
-   cache.set(index,{image,promise});image.src=source(index);
-   while(cache.size>16)cache.delete(cache.keys().next().value);
+   const image=new Image();image.decoding='async';inFlight++;
+   let cancel;
+   const promise=new Promise((resolve,reject)=>{
+    let settled=false;
+    const finish=(error)=>{if(settled)return;settled=true;inFlight--;image.onload=image.onerror=null;if(error){cache.delete(index);reject(error);}else resolve(image);};
+    image.onload=()=>{if(image.decode)image.decode().catch(()=>{}).then(()=>finish());else finish();};
+    image.onerror=()=>finish(new Error('Cover frame unavailable'));
+    cancel=()=>{finish(new DOMException('Cancelled','AbortError'));image.src='';};
+   });
+   cache.set(index,{image,promise,cancel});image.src=source(index);
+   while(cache.size>16){const candidate=[...cache.keys()].filter(n=>n!==desired&&n!==shown).sort((a,b)=>Math.abs(b-desired)-Math.abs(a-desired))[0];if(candidate===undefined)break;const entry=cache.get(candidate);cache.delete(candidate);entry.cancel();}
    return promise;
   }
   function display(index){
    desired=index;
    if(index===shown||index===requested)return;
+   if(!cache.has(index)&&inFlight>=3)return;
    requested=index;
    load(index).then(()=>{
     if(!alive)return;
@@ -48,9 +52,9 @@
     paint((index-1)/(media.frames-1));
     if(debug){trace.push({frame:index,time:Math.round(performance.now()),target});if(trace.length>40)trace.shift();scene.dataset.frameTrace=JSON.stringify(trace);}
     for(const offset of [direction,direction*2,direction*3,direction*4,-direction,-direction*2]){
-     const n=index+offset;if(n>=1&&n<=media.frames)load(n).catch(()=>{});
+     const n=index+offset;if(n>=1&&n<=media.frames&&(cache.has(n)||inFlight<3))load(n).catch(()=>{}).finally(()=>{if(alive)display(desired);});
     }
-   }).catch(()=>{if(alive){if(requested===index)requested=0;scene.dataset.frameError=String(index);}});
+   }).catch(error=>{if(alive){if(requested===index)requested=0;if(error.name!=='AbortError'){scene.dataset.frameError=String(index);clearTimeout(retry);retry=setTimeout(()=>display(desired),600);}}}).finally(()=>{if(alive&&desired!==shown&&desired!==index)display(desired);});
   }
   function fit(){
    const width=stage.clientWidth,small=width<=700;
@@ -79,7 +83,7 @@
    // Smooth only the visual playhead. Native wheel, touch, scrollbar and anchors
    // keep their normal scrolling, with exact endpoints before the sticky release.
    if(!Number.isFinite(smoothed)||!enabled||target===0||target===1)smoothed=target;
-   else smoothed+=(target-smoothed)*(1-Math.exp(-dt/110));
+   else smoothed+=(target-smoothed)*(1-Math.exp(-dt/(preference.matches?60:110)));
    if(Math.abs(target-smoothed)<.00001)smoothed=target;
    scene.dataset.targetProgress=target.toFixed(4);
    const inCover=rect.bottom>110&&rect.top<innerHeight;
@@ -91,7 +95,8 @@
   }
   function schedule(){if(!raf)raf=requestAnimationFrame(update);}
   function mode(){
-   enabled=choice??!preference.matches;
+   enabled=choice;
+   scene.dataset.motion=enabled?'on':'off';
    scene.classList.toggle('is-static',!enabled);
    control.setAttribute('aria-label',enabled?'Atura l’animació':'Activa l’animació amb scroll');
    control.setAttribute('title',enabled?'Atura l’animació':'Activa l’animació amb scroll');
@@ -102,7 +107,7 @@
   }
   function toggle(){
    const top=scrollY+scene.getBoundingClientRect().top;
-   choice=!enabled;remember();mode();window.scrollTo({top,behavior:'instant'});schedule();
+   choice=!enabled;mode();window.scrollTo({top,behavior:'instant'});schedule();
   }
   function resize(){fit();schedule();}
   control.addEventListener('click',toggle);
@@ -111,8 +116,8 @@
   preference.addEventListener('change',mode);
   const observer=new ResizeObserver(resize);observer.observe(stage);
   document.fonts?.ready.then(()=>{if(alive)fit();});
-  fit();mode();
-  clean=()=>{alive=false;cancelAnimationFrame(raf);observer.disconnect();cache.clear();control.removeEventListener('click',toggle);window.removeEventListener('scroll',schedule);window.removeEventListener('resize',resize);preference.removeEventListener('change',mode);header.classList.remove('is-cover-mode','is-cover-nav-hidden');header.style.removeProperty('--cover-nav-opacity');};
+  choice=true;fit();mode();
+  clean=()=>{alive=false;clearTimeout(retry);cancelAnimationFrame(raf);observer.disconnect();cache.forEach(entry=>entry.cancel());cache.clear();control.removeEventListener('click',toggle);window.removeEventListener('scroll',schedule);window.removeEventListener('resize',resize);preference.removeEventListener('change',mode);header.classList.remove('is-cover-mode','is-cover-nav-hidden');header.style.removeProperty('--cover-nav-opacity');};
  }
  function unmount(){clean?.();clean=null;}
  window.portfolioCover={mount,unmount};

@@ -24,11 +24,10 @@
  function create(article){
   const events=new AbortController(),signal=events.signal;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-  const reviewMotion=new URLSearchParams(location.search).get('a3-water-motion');
-  // Scroll remains the narrative even with reduced motion. Only the autonomous
-  // surface ripples stop; the old finished still incorrectly skipped all pouring.
-  const staticMode=()=>reviewMotion==='off';
-  const surfaceMotion=()=>reviewMotion==='on'||!reduced.matches;
+  // Marc requests active pouring on every entry, without query/play gates.
+  // Document scroll still determines the leading edge; surface time never does.
+  const staticMode=()=>false;
+  const surfaceMotion=()=>true;
   const rack=document.createElement('div');rack.className='a3-water-rack';rack.setAttribute('aria-hidden','true');
   for(let i=0;i<models.length;i++){
    const m=models[i],tile=document.createElement('div');tile.className='a3-water-tap';tile.style.setProperty('--lift',lifts[i]+'px');
@@ -144,7 +143,7 @@
   }
   function measure(){
    if(dead||!article.isConnected)return;
-   dirty=false;width=document.documentElement.clientWidth;height=innerHeight;dpr=Math.min(devicePixelRatio||1,width<=700?1.25:1.5,Math.sqrt(4000000/(width*height)));
+   dirty=false;width=document.documentElement.clientWidth;height=innerHeight;dpr=Math.min(devicePixelRatio||1,width<=700?.85:1,Math.sqrt(2000000/(width*height)));
    for(const c of optics?[canvas,mask]:[canvas,mask,scratch]){c.width=Math.ceil(width*dpr);c.height=Math.ceil(height*dpr);}
    endingRect=docRect(ending);clipY=docRect(next).y;
    maskDirty=true;
