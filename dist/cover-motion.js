@@ -17,51 +17,27 @@
   const pictures=[...scene.querySelectorAll('.cover-art img')];
   const control=scene.querySelector('.cover-control');
   const header=document.querySelector('.site-header');
-  const cache=new Map();
   const debug=new URLSearchParams(location.search).get('cover-debug')==='on',trace=[];
-  let alive=true,raf=0,desired=0,shown=0,requested=0,smoothed=NaN,lastTime=0,target=0,enabled=true,inFlight=0,retry=0,lastDirection=1;
-  function prefetch(){
-   if(!alive||!shown||desired!==shown)return;
-   for(const offset of [1,2,3,4,5,6,7,8,-1,-2,-3,-4]){
-    const n=shown+offset*lastDirection;
-    if(n<1||n>media.frames||cache.has(n)||inFlight>=3)continue;
-    load(n).then(prefetch).catch(()=>{}).finally(()=>{if(alive)display(desired);});
-   }
+  const canvases=pictures.map(image=>{const canvas=document.createElement('canvas');canvas.width=media.width;canvas.height=media.height;canvas.setAttribute('aria-hidden','true');image.after(canvas);return canvas;});
+  const contexts=canvases.map(c=>c.getContext('2d'));
+  if(contexts.some(context=>!context)){
+   canvases.forEach(c=>c.remove());pictures.forEach(i=>{i.src=source(media.frames);});scene.classList.add('is-static');stage.style.setProperty('--reveal','1');control.hidden=true;return;
   }
-
-  function load(index){
-   if(cache.has(index)){const value=cache.get(index);cache.delete(index);cache.set(index,value);return value.promise;}
-   const image=new Image();image.decoding='async';inFlight++;
-   let cancel;
-   const promise=new Promise((resolve,reject)=>{
-    let settled=false;
-    const finish=(error)=>{if(settled)return;settled=true;inFlight--;image.onload=image.onerror=null;if(error){cache.delete(index);reject(error);}else resolve(image);};
-    image.onload=()=>{if(image.decode)image.decode().catch(()=>{}).then(()=>finish());else finish();};
-    image.onerror=()=>finish(new Error('Cover frame unavailable'));
-    cancel=()=>{finish(new DOMException('Cancelled','AbortError'));image.src='';};
-   });
-   cache.set(index,{image,promise,cancel});image.src=source(index);
-   while(cache.size>16){const candidate=[...cache.keys()].filter(n=>n!==desired&&n!==shown).sort((a,b)=>Math.abs(b-desired)-Math.abs(a-desired))[0];if(candidate===undefined)break;const entry=cache.get(candidate);cache.delete(candidate);entry.cancel();}
-   return promise;
-  }
+  let alive=true,raf=0,shown=0,smoothed=NaN,lastTime=0,target=0,enabled=true,draws=0,drawMs=0,drawMax=0;
+  const stream=window.portfolioFrameStream.create({manifestURL:'assets/scroll-original-r11/cover.json',source,
+   onReady:()=>{if(alive)schedule();},onError:()=>{if(alive)scene.dataset.frameError='retrying';},
+   onStats:debug?stats=>{scene.dataset.stream=JSON.stringify(stats);}:undefined});
   function display(index){
-   desired=index;
-   if(index===shown||index===requested)return;
-   if(!cache.has(index)&&inFlight>=3)return;
-   requested=index;
-   load(index).then(()=>{
-    if(!alive)return;
-    if(requested===index)requested=0;
-    // Accept a decoded intermediate frame only if it advances toward the latest
-    // request. Cold images cannot stall playback or arrive out of order.
-    const direction=Math.sign(desired-shown);
-    if(!direction||(index-shown)*direction<=0||(desired-index)*direction<0)return;
-    pictures.forEach(image=>{image.src=source(index);});shown=index;lastDirection=direction;scene.dataset.frame=String(index);
-    delete scene.dataset.frameError;
-    paint((index-1)/(media.frames-1));
-    if(debug){trace.push({frame:index,time:Math.round(performance.now()),target});if(trace.length>40)trace.shift();scene.dataset.frameTrace=JSON.stringify(trace);}
-    prefetch();
-   }).catch(error=>{if(alive){if(requested===index)requested=0;if(error.name!=='AbortError'){scene.dataset.frameError=String(index);clearTimeout(retry);retry=setTimeout(()=>display(desired),600);}}}).finally(()=>{if(alive&&desired!==shown&&desired!==index)display(desired);});
+   stream.target(index);
+   if(index===shown)return true;
+   const image=stream.take(index);if(!image)return false;
+   const started=performance.now();
+   contexts.forEach(context=>{context.clearRect(0,0,media.width,media.height);context.drawImage(image,0,0,media.width,media.height);});
+   canvases.forEach(c=>c.parentElement.classList.add('has-frames'));
+   shown=index;scene.dataset.frame=String(index);delete scene.dataset.frameError;
+   paint((index-1)/(media.frames-1));
+   if(debug){const ms=performance.now()-started;drawMs+=ms;draws++;drawMax=Math.max(drawMax,ms);scene.dataset.draw=JSON.stringify({mean:+(drawMs/draws).toFixed(2),max:+drawMax.toFixed(2)});trace.push({frame:index,time:Math.round(performance.now()),target});if(trace.length>80)trace.shift();scene.dataset.frameTrace=JSON.stringify(trace);}
+   return true;
   }
   function fit(){
    const width=stage.clientWidth,small=width<=700;
@@ -89,16 +65,20 @@
    const dt=lastTime?Math.min(now-lastTime,64):16;lastTime=now;
    // Smooth only the visual playhead. Native wheel, touch, scrollbar and anchors
    // keep their normal scrolling, with exact endpoints before the sticky release.
-   if(!Number.isFinite(smoothed)||!enabled||target===0||target===1)smoothed=target;
-   else smoothed+=(target-smoothed)*(1-Math.exp(-dt/(preference.matches?45:75)));
-   if(Math.abs(target-smoothed)<.00001)smoothed=target;
+   if(!Number.isFinite(smoothed))smoothed=target;
+   const gap=target-smoothed;
+   const step=Math.sign(gap)*Math.min(Math.abs(gap)*(1-Math.exp(-dt/(preference.matches?45:150))),120*dt/1000/(media.frames-1));
+   let next=!enabled||rect.top>=0||rect.bottom<=stage.offsetHeight?target:smoothed+step;
+   if(Math.abs(target-next)<.0001)next=target;
    scene.dataset.targetProgress=target.toFixed(4);
    const inCover=rect.bottom>110&&rect.top<innerHeight;
    header.classList.toggle('is-cover-mode',inCover);
    if(!inCover)header.classList.remove('is-cover-nav-hidden');
    else if(!shown)paint(smoothed);
-   display(1+Math.round(smoothed*(media.frames-1)));
-   if(smoothed!==target)schedule();else lastTime=0;
+   const ready=display(1+Math.round(next*(media.frames-1)));
+   // Do not race past an unavailable image, then jump when an old request ends.
+   if(ready)smoothed=next;
+   if(ready&&smoothed!==target)schedule();else lastTime=0;
   }
   function schedule(){if(!raf)raf=requestAnimationFrame(update);}
   function mode(){
@@ -108,7 +88,7 @@
    control.setAttribute('aria-label',enabled?'Atura l’animació':'Activa l’animació amb scroll');
    control.setAttribute('title',enabled?'Atura l’animació':'Activa l’animació amb scroll');
    control.setAttribute('aria-pressed',String(enabled));
-   cancelAnimationFrame(raf);smoothed=NaN;lastTime=0;
+   cancelAnimationFrame(raf);smoothed=shown?(shown-1)/(media.frames-1):0;lastTime=0;
    paint(enabled?0:1);
    update();
   }
@@ -117,6 +97,8 @@
    choice=!enabled;mode();window.scrollTo({top,behavior:'instant'});schedule();
   }
   function resize(){fit();schedule();}
+  function visibility(){stream.active(!document.hidden);if(!document.hidden){shown=0;schedule();}}
+  document.addEventListener('visibilitychange',visibility);
   control.addEventListener('click',toggle);
   window.addEventListener('scroll',schedule,{passive:true});
   window.addEventListener('resize',resize,{passive:true});
@@ -124,7 +106,7 @@
   const observer=new ResizeObserver(resize);observer.observe(stage);
   document.fonts?.ready.then(()=>{if(alive)fit();});
   choice=true;fit();mode();
-  clean=()=>{alive=false;clearTimeout(retry);cancelAnimationFrame(raf);observer.disconnect();cache.forEach(entry=>entry.cancel());cache.clear();control.removeEventListener('click',toggle);window.removeEventListener('scroll',schedule);window.removeEventListener('resize',resize);preference.removeEventListener('change',mode);header.classList.remove('is-cover-mode','is-cover-nav-hidden');header.style.removeProperty('--cover-nav-opacity');};
+  clean=()=>{alive=false;cancelAnimationFrame(raf);observer.disconnect();stream.destroy();canvases.forEach(c=>c.remove());pictures.forEach(i=>i.parentElement.classList.remove('has-frames'));document.removeEventListener('visibilitychange',visibility);control.removeEventListener('click',toggle);window.removeEventListener('scroll',schedule);window.removeEventListener('resize',resize);preference.removeEventListener('change',mode);header.classList.remove('is-cover-mode','is-cover-nav-hidden');header.style.removeProperty('--cover-nav-opacity');};
  }
  function unmount(){clean?.();clean=null;}
  window.portfolioCover={mount,unmount};

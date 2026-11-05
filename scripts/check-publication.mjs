@@ -71,6 +71,24 @@ export function checkPublication(){
    for(let n=1;n<=lite.frame_count;n++)checkRef(liteManifest,`${tier.directory}/${String(n).padStart(4,'0')}.webp`);
   }
  }
+ if(paths.has('frame-stream.js'))for(const [name,count] of [['cover',240],['ev-mobile',360],['ev-desktop',360]]){
+  const manifest=`assets/scroll-original-r11/${name}.json`;
+  if(!paths.has(manifest)){errors.push(`Missing original frame blocks: ${name}`);continue;}
+  const pack=JSON.parse(fs.readFileSync(path.join(dist,manifest),'utf8')),blocks=new Map();
+  if(pack.count!==count||pack.frames.length!==count+1)errors.push(`Invalid packed frame count: ${name}`);
+  for(const [i,chunk] of pack.chunks.entries()){
+   checkRef(manifest,chunk.file);
+   const file=path.join(dist,path.posix.dirname(manifest),chunk.file);if(!fs.existsSync(file))continue;
+   const data=fs.readFileSync(file);blocks.set(i,data);
+   if(data.length!==chunk.bytes||crypto.createHash('sha256').update(data).digest('hex')!==chunk.sha256)errors.push(`Damaged frame block: ${chunk.file}`);
+  }
+  for(let n=1;n<=count;n++){
+   const frame=pack.frames[n];if(!frame){errors.push(`Missing packed frame ${name}/${n}`);continue;}
+   const data=blocks.get(frame.chunk)?.subarray(frame.offset,frame.offset+frame.length);
+   const original=path.join(dist,pack.originalDirectory,frame.file);
+   if(!data||!fs.existsSync(original)||!data.equals(fs.readFileSync(original)))errors.push(`Packed frame differs from original: ${name}/${n}`);
+  }
+ }
  const tracked=spawnSync('git',['ls-files','-z'],{cwd:root,encoding:'utf8'});
  if(tracked.status===0)for(const name of tracked.stdout.split('\0').filter(Boolean)){
   const allowed=/^(?:dist\/|\.github\/|\.githooks\/|scripts\/(?:serve\.mjs|build-responsive-images\.py|check-publication\.mjs|publication\.mjs|guard-push\.mjs)$|(?:\.gitignore|\.gitattributes|AGENTS\.md|README\.md|PUBLICACIO\.md|publication\.config\.json|package\.json|SOURCE-MANIFEST-V29\.json|OBRIR-PORTAFOLI\.cmd)$)/.test(name);

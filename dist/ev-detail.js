@@ -1,6 +1,6 @@
 /* Deterministic v05 frames on native reversible scroll; no wheel/touch capture. */
 (()=>{
- const base='assets/ev-charger-lite-r10/';
+ const base='assets/ev-charger-v05-referencia/';
  let clean=null;
  function unmount(){clean?.();clean=null;}
  function mount(){
@@ -12,37 +12,19 @@
   const poster=scene.querySelector('.ev-detail-poster');
   const status=scene.querySelector('.ev-detail-status'),header=document.querySelector('.site-header');
   const article=scene.closest('.project-ev');
-  const cache=new Map(),pending=new Map(),failed=new Set();
+  let stream=null;const inkCache=new Map();
   const samples=document.createElement('canvas');samples.width=4;samples.height=1;
   const sampleContext=samples.getContext('2d',{willReadFrequently:true});
   const manifestRequest=new AbortController();
-  let alive=true,enabled=true,mediaFailed=false,manifest=null,tier=null,limit=0,manifestLoading=false,lastRecovery=0,recoveryTimer=0;
+  let alive=true,enabled=true,mediaFailed=false,manifest=null,tier=null,manifestLoading=false,lastRecovery=0,recoveryTimer=0;
   const media=window.portfolioMotionMedia;
-  let raf=0,desired=1,shown=0,queue=[],posterReady=false,painted=false,cursor=1,lastStamp=0,rawTarget=1,queuedFrame=0;
+  let raf=0,shown=0,posterReady=false,cursor=1,lastStamp=0,rawTarget=1,draws=0,drawMs=0,drawMax=0,stageWidth=1;
   const reduced=matchMedia('(prefers-reduced-motion:reduce)');
   const debug=new URLSearchParams(location.search).get('ev-debug')==='on',trace=[];
 
-  function diagnostics(){
-   scene.dataset.cache=String(cache.size);
-   scene.dataset.pending=String(pending.size);
-   scene.dataset.decodedBytes=String(tier?cache.size*tier.width*tier.height*4:0);
-  }
-  function close(image){image?.close?.();}
-  function trim(){
-   while(cache.size>limit){
-    const candidate=[...cache.keys()].filter(n=>n!==shown&&n!==desired&&n!==queuedFrame).sort((a,b)=>Math.abs(b-desired)-Math.abs(a-desired))[0];
-    if(candidate===undefined)break;
-    close(cache.get(candidate));cache.delete(candidate);
-   }
-   diagnostics();
-  }
-  function resetLoads(){
-   queue=[];queuedFrame=0;
-   pending.forEach(controller=>controller.abort());pending.clear();
-   cache.forEach(close);cache.clear();diagnostics();
-  }
   function draw(image,index=shown){
    if(!alive||!context)return;
+   const started=performance.now();
    const iw=image.naturalWidth||image.width,ih=image.naturalHeight||image.height;
    if(!iw||!ih)return;
    const w=canvas.width,h=canvas.height,scale=Math.max(w/iw,h/ih);
@@ -54,7 +36,9 @@
    context.drawImage(image,x,y,width,height);
    if(whiteAlpha){context.fillStyle='rgba(255,255,255,'+whiteAlpha+')';context.fillRect(0,0,w,h);}
    if(sampleContext){
-    const density=w/stage.clientWidth;
+    let colors=inkCache.get(index);
+    if(!colors){
+    const density=w/stageWidth;
     const points=[[w*.08,38*density],[w*.84,35*density],[w*.12,146*density],[w*.14,h-130*density]];
     points.forEach(([px,py],n)=>{
      const sx=Math.max(0,Math.min(iw-1,Math.floor((px-x)/scale)));
@@ -66,78 +50,29 @@
      const rgb=values.map(value=>{const n=(value+(255-value)*whiteAlpha)/255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4;});
      return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>.179?'#000':'#fff';
     };
-    const color=n=>ink([...pixels.slice(n*4,n*4+3)]);
+    colors=[0,1,2,3].map(n=>ink([...pixels.slice(n*4,n*4+3)]));inkCache.set(index,colors);
+    }
+    const color=n=>colors[n];
     const heldWhite=enabled&&scene.dataset.progress==='1.00000';
     header.style.setProperty('--ev-detail-logo-ink',heldWhite?'#000':color(0));
     header.style.setProperty('--ev-detail-nav-ink',heldWhite?'#000':color(1));
     stage.style.setProperty('--ev-detail-title-ink',color(2));
     stage.style.setProperty('--ev-detail-left-ink',color(3));
    }
-   stage.classList.add('has-canvas');painted=true;
+   stage.classList.add('has-canvas');
+   if(debug){const ms=performance.now()-started;draws++;drawMs+=ms;drawMax=Math.max(drawMax,ms);scene.dataset.draw=JSON.stringify({mean:+(drawMs/draws).toFixed(2),max:+drawMax.toFixed(2)});}
   }
-  function drawPoster(){if(posterReady)draw(poster,1);}
-  function show(index){
-   const anchor=queuedFrame||shown,direction=Math.sign(desired-anchor);
-   if(index===desired||direction&&(index-anchor)*direction>0&&(desired-index)*direction>=0){queuedFrame=index;schedule();}
-  }
-  function paintQueued(){
-   if(!queuedFrame)return;
-   const index=queuedFrame,image=cache.get(index);queuedFrame=0;if(!image)return;
-   draw(image,index);shown=index;scene.dataset.frame=String(index);
-   if(debug){trace.push({frame:index,target:rawTarget,at:Math.round(performance.now())});if(trace.length>60)trace.shift();scene.dataset.trace=JSON.stringify(trace);}
-   status.textContent='';delete scene.dataset.frameError;clearTimeout(recoveryTimer);recoveryTimer=0;trim();
-  }
-  function plan(){
-   const direction=Math.sign(desired-shown)||1;
-   const ahead=Math.min(12,Math.ceil((limit-2)*.7)),behind=Math.min(6,limit-2-ahead);
-   queue=[desired,...Array.from({length:ahead},(_,i)=>desired+(i+1)*direction),...Array.from({length:behind},(_,i)=>desired-(i+1)*direction)]
-    .filter((n,i,items)=>n>=1&&n<=manifest.frame_count&&items.indexOf(n)===i&&!cache.has(n)&&!pending.has(n)&&!failed.has(n));
-   pump();
-  }
-  function pump(){
-   if(!alive||!enabled||!tier||!context)return;
-   while(pending.size<3&&queue.length){
-    const index=queue.shift(),controller=new AbortController();
-    pending.set(index,controller);diagnostics();
-    media.read(base+tier.directory+'/'+String(index).padStart(4,'0')+'.webp',{
-      signal:controller.signal,consume:async response=>media.decodeImage(await response.blob()),
-      onRetry:()=>{scene.dataset.retries=String(Number(scene.dataset.retries||0)+1);}
-     })
-     .then(image=>{
-      if(!alive||!enabled||controller.signal.aborted||Math.abs(index-desired)>40){close(image);return;}
-      cache.set(index,image);
-      const direction=Math.sign(desired-shown);
-      if(index===desired||direction&&(index-shown)*direction>0&&(desired-index)*direction>=0)show(index);
-      trim();
-     })
-     .catch(error=>{
-      if(!alive||controller.signal.aborted||error.name==='AbortError')return;
-      failed.add(index);scene.dataset.frameError=String(index);
-      if(!painted)drawPoster();
-      // Keep the poster and other frames usable. One failed frame must never
-      // disable the complete scroll sequence for the remainder of the visit.
-      if(!shown&&index===desired)status.textContent='Carregant la seqüència…';
-      if(index===desired||!shown)retryLater();
-     })
-     .finally(()=>{
-      if(pending.get(index)===controller)pending.delete(index);
-      if(alive){diagnostics();pump();}
-     });
-   }
-  }
+  // The native image is already visible. Avoid uploading it to canvas and
+  // synchronously reading it back just to show the same first frame again.
+  function drawPoster(){if(posterReady&&!shown)stage.classList.remove('has-canvas');}
   function request(index){
-   desired=index;scene.dataset.targetFrame=String(index);
-   if(failed.has(index)&&performance.now()-lastRecovery>5000){failed.delete(index);lastRecovery=performance.now();}
-   for(const [n,controller] of pending)if(Math.abs(n-index)>40){controller.abort();pending.delete(n);}
-   if(cache.has(index)){
-    const image=cache.get(index);cache.delete(index);cache.set(index,image);
-    if(shown!==index)show(index);
-   }else{
-    const direction=Math.sign(index-shown);
-    const nearest=[...cache.keys()].filter(n=>(n-shown)*direction>0&&(index-n)*direction>=0).sort((a,b)=>Math.abs(a-index)-Math.abs(b-index))[0];
-    if(nearest!==undefined)show(nearest);
-   }
-   plan();
+   scene.dataset.targetFrame=String(index);stream?.target(index);
+   if(index===shown)return true;
+   const image=stream?.take(index);if(!image)return false;
+   draw(image,index);shown=index;scene.dataset.frame=String(index);
+   status.textContent='';delete scene.dataset.frameError;
+   if(debug){trace.push({frame:index,target:rawTarget,at:Math.round(performance.now())});if(trace.length>100)trace.shift();scene.dataset.trace=JSON.stringify(trace);}
+   return true;
   }
   function update(stamp=performance.now()){
    raf=0;if(!alive)return;
@@ -165,42 +100,42 @@
    if(enabled&&manifest&&tier&&rect.top<innerHeight&&rect.bottom>0){
     rawTarget=1+progress*(manifest.frame_count-1);
     const delta=lastStamp?Math.min(64,Math.max(1,stamp-lastStamp)):16;lastStamp=stamp;
-    const response=reduced.matches?35:65;
-    cursor=cursor+(rawTarget-cursor)*(1-Math.exp(-delta/response));
-    if(Math.abs(rawTarget-cursor)<.08)cursor=rawTarget;
+    const gap=rawTarget-cursor;
+    const step=Math.sign(gap)*Math.min(Math.abs(gap)*(1-Math.exp(-delta/(reduced.matches?45:150))),120*delta/1000);
+    let next=cursor+step;if(Math.abs(rawTarget-next)<.05)next=rawTarget;
+    if(rect.bottom<=stage.offsetHeight||progress===0||progress===1)next=rawTarget;
     scene.dataset.rawTargetFrame=String(Math.round(rawTarget));
-    request(Math.max(1,Math.min(manifest.frame_count,Math.round(cursor))));
-    if(cursor!==rawTarget)schedule();
+    const ready=request(Math.max(1,Math.min(manifest.frame_count,Math.round(next))));
+    if(ready)cursor=next;
+    if(ready&&cursor!==rawTarget)schedule();else if(!ready)lastStamp=0;
    }else lastStamp=0;
-   // Several fetches can finish in one task. Paint only the most useful frame
-   // once per screen refresh, instead of uploading each intermediate bitmap.
-   paintQueued();
+
   }
   function schedule(){if(alive&&!raf)raf=requestAnimationFrame(update);}
   function fit(){
-   const w=stage.clientWidth,h=stage.clientHeight;
+   const w=stage.clientWidth,h=stage.clientHeight;stageWidth=w;inkCache.clear();
    // The viewport does not need a retina 4K drawing surface for every scroll tick.
-   const ratio=Math.min(devicePixelRatio||1,1,Math.sqrt(1600*900/Math.max(1,w*h)));
+   const ratio=Math.min(devicePixelRatio||1,1.25,Math.sqrt(1920*1080/Math.max(1,w*h)));
    const width=Math.max(1,Math.round(w*ratio)),height=Math.max(1,Math.round(h*ratio));
    if(canvas.width!==width||canvas.height!==height){
     canvas.width=width;canvas.height=height;
-    if(enabled&&cache.has(shown))draw(cache.get(shown));else drawPoster();
+    const image=stream?.take(shown);if(enabled&&image)draw(image);else drawPoster();
    }
    schedule();
   }
   function mode(){
    enabled=!mediaFailed&&!!context;
    scene.dataset.motion=enabled?'on':'off';
-   if(!enabled){resetLoads();shown=0;scene.dataset.frame='1';drawPoster();}
+   if(!enabled){shown=0;scene.dataset.frame='1';drawPoster();}
    fit();update();
   }
   function visibility(){
-   if(document.hidden){cancelAnimationFrame(raf);raf=0;resetLoads();}
-   else{if(!manifest)loadManifest();fit();schedule();}
+   if(document.hidden){cancelAnimationFrame(raf);raf=0;stream?.active(false);shown=0;}
+   else{stream?.active(true);if(!manifest)loadManifest();fit();schedule();}
   }
   function posterLoaded(){
    if(!alive)return;posterReady=true;
-   if(!shown)drawPoster();
+   if(!shown&&canvas.width>1&&canvas.height>1)drawPoster();
   }
   poster.addEventListener('load',posterLoaded);
   if(poster.complete&&poster.naturalWidth)posterLoaded();
@@ -216,13 +151,17 @@
     if(!alive)return;
     manifest=data;
     const constrained=navigator.connection?.saveData||(navigator.deviceMemory||8)<4;
-    // Moderately smaller derivatives of the corrected v05 render. The original
-    // frames, camera, materials, LED and all 360 sequence positions stay intact.
+    // Use the original corrected files, with unchanged image dimensions/quality.
     const width=Math.max(stage.clientWidth,stage.clientHeight*16/9);
     const name=constrained||stage.clientWidth<=700||width<=1920?'mobile':'desktop';
     tier=manifest.tiers[name];scene.dataset.tier=name;
-    limit=Math.max(3,Math.min(20,Math.floor(56*1024*1024/(tier.width*tier.height*4))));
-    mediaFailed=false;scene.dataset.cacheLimit=String(limit);mode();
+    if(name==='desktop')poster.src=base+tier.directory+'/0001.webp';
+    stream=window.portfolioFrameStream.create({manifestURL:'assets/scroll-original-r11/ev-'+name+'.json',
+     source:n=>base+tier.directory+'/'+String(n).padStart(4,'0')+'.webp',
+     onReady:()=>{if(alive)schedule();},onError:()=>{if(alive){scene.dataset.frameError='retrying';retryLater();}},
+     onStats:stats=>{if(!alive)return;scene.dataset.cache=String(stats.cache);scene.dataset.cacheLimit=String(stats.limit);scene.dataset.pending=String(stats.pending);scene.dataset.decodedBytes=String(stats.decodedBytes);if(debug)scene.dataset.stream=JSON.stringify(stats);}
+    });
+    mediaFailed=false;mode();
    })
    .catch(error=>{
     if(!alive||error.name==='AbortError')return;
@@ -234,11 +173,11 @@
    const rect=scene.getBoundingClientRect();if(rect.top>=innerHeight||rect.bottom<=0)return;
    recoveryTimer=setTimeout(()=>{recoveryTimer=0;recover();},3000);
   }
-  function recover(){if(!alive)return;clearTimeout(recoveryTimer);recoveryTimer=0;failed.clear();if(!manifest)loadManifest();else{mediaFailed=false;mode();}}
+  function recover(){if(!alive)return;clearTimeout(recoveryTimer);recoveryTimer=0;if(!manifest)loadManifest();else{mediaFailed=false;mode();}}
   window.addEventListener('online',recover);window.addEventListener('focus',recover);
   loadManifest();
   clean=()=>{
-   alive=false;clearTimeout(recoveryTimer);manifestRequest.abort();cancelAnimationFrame(raf);resetLoads();observer.disconnect();
+   alive=false;clearTimeout(recoveryTimer);manifestRequest.abort();cancelAnimationFrame(raf);stream?.destroy();inkCache.clear();observer.disconnect();
    poster.removeEventListener('load',posterLoaded);
    window.removeEventListener('scroll',schedule);window.removeEventListener('resize',fit);
    document.removeEventListener('visibilitychange',visibility);

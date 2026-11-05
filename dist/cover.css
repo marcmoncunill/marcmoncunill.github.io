@@ -29,3 +29,8 @@
  .site-header.is-cover-mode{padding:25px 4%}
 }
 @media(prefers-reduced-motion:reduce){.cover-control{transition:none}}
+
+/* Paint the original decoded bitmap into both existing layers in one refresh. */
+.cover-art canvas{position:absolute;inset:0;display:block;width:100%;height:100%;visibility:hidden}
+.cover-art.has-frames canvas{visibility:visible}
+.cover-art.has-frames img{visibility:hidden}

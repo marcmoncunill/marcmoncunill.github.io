@@ -11,12 +11,12 @@
    signal?.addEventListener('abort',abort,{once:true});
   });
  }
- async function read(url,{signal,consume=r=>r.blob(),onRetry}={}){
+ async function read(url,{signal,consume=r=>r.blob(),onRetry,timeoutMs=5000}={}){
   for(let attempt=0;attempt<3;attempt++){
    if(signal?.aborted)throw cancelled();
    const request=new AbortController(),abort=()=>request.abort();
    signal?.addEventListener('abort',abort,{once:true});
-   const timer=setTimeout(abort,5000);
+   const timer=setTimeout(abort,timeoutMs);
    try{
     const response=await fetch(url,{signal:request.signal,cache:attempt?'reload':'force-cache'});
     if(!response.ok)throw new Error('Media '+response.status);
