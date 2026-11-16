@@ -255,8 +255,9 @@ document.addEventListener('click',event=>{
   const target=event.target.closest('[data-image]');
   if(target){
     const img=dialog.querySelector('img');
-    const metadata=imageMetadata[target.dataset.image.split('?')[0]];
-    img.src=A+target.dataset.image;
+    const file=target.dataset.imageMobile&&matchMedia('(max-width:700px)').matches?target.dataset.imageMobile:target.dataset.image;
+    const metadata=imageMetadata[file.split('?')[0]];
+    img.src=A+file;
     img.alt=target.querySelector('img').alt;
     if(metadata){img.width=metadata.width;img.height=metadata.height;}
     dialog.querySelector('p').textContent=target.dataset.caption;

@@ -1,0 +1,67 @@
+/* Contrapposto only: real renders, one physical prototype and an integrated line drawing. */
+.oil-editorial .oil-introduction{display:grid;grid-template-columns:34% 52%;justify-content:space-between;align-items:start;padding:44px 3.5vw 76px}
+.oil-introduction>.project-credits{display:flex;flex-direction:column;gap:12px;margin:0;max-width:33ch}
+.oil-introduction .project-credit{font-size:15px;line-height:1.5;letter-spacing:-.015em;margin:0}
+.oil-introduction .credit-author{font-size:22px;line-height:1.2;letter-spacing:-.03em}
+.oil-editorial .oil-copy{max-width:510px;min-width:0}
+.oil-editorial .oil-copy h2,.oil-editorial .oil-section-head h2{font-size:clamp(32px,3.1vw,48px);line-height:1.06;letter-spacing:-.04em;font-weight:450;margin:0 0 22px}
+.oil-editorial .oil-copy>p{font-size:17px;line-height:1.55;max-width:43ch;margin:0 0 20px}
+.oil-editorial .oil-copy>p:last-child{margin-bottom:0}
+.oil-editorial .oil-copy h3{font-size:17px;line-height:1.3;font-weight:550;letter-spacing:-.018em;margin:26px 0 10px}
+.oil-editorial .oil-copy .oil-small{font-size:14px;color:#62625b;margin-top:24px}
+.oil-editorial .oil-spread{display:grid;grid-template-columns:56% 36%;justify-content:space-between;align-items:center;gap:0;margin:0 3.5vw 100px}
+.oil-editorial .oil-spread.is-reversed{grid-template-columns:36% 56%}
+.oil-editorial .oil-spread.is-reversed .oil-visuals{grid-column:2;grid-row:1}
+.oil-editorial .oil-spread.is-reversed .oil-copy{grid-column:1;grid-row:1}
+.oil-editorial .oil-visuals{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.8fr);gap:18px;align-items:center;min-width:0}
+.oil-editorial .oil-photo{margin:0;min-width:0}
+.oil-editorial .oil-photo .image-button{border-radius:12px;overflow:hidden;background:transparent}
+.oil-editorial .oil-photo img{width:100%;height:auto;object-fit:contain;display:block}
+.oil-editorial .oil-photo figcaption,.oil-editorial .oil-blueprint figcaption{font-size:12px;line-height:1.4;color:#62625b;max-width:40ch;margin-top:10px;text-wrap:pretty}
+.oil-editorial .oil-material .oil-visuals{display:block}
+.oil-editorial .oil-technical{margin:0 3.5vw 100px}
+.oil-editorial .oil-section-head{display:grid;grid-template-columns:42% 43%;justify-content:space-between;align-items:start;margin-bottom:34px}
+.oil-editorial .oil-section-head p{font-size:17px;line-height:1.55;max-width:40ch;margin:0}
+.oil-editorial .oil-document-link{display:inline-flex;align-items:center;min-height:44px;font-size:14px;line-height:1.4;margin-top:16px;text-decoration:underline;text-underline-offset:5px}
+.oil-editorial .oil-document-link:hover{color:#c73825}
+.oil-editorial .oil-blueprint{margin:0}
+.oil-editorial .oil-blueprint .image-button{background:transparent;border-radius:0;overflow:visible}
+.oil-editorial .oil-blueprint img{display:block;width:100%;height:auto;max-height:560px;object-fit:contain}
+.oil-editorial .oil-prototype .oil-visuals{display:flex;justify-content:center}
+.oil-editorial .oil-photo-prototype{width:56%;max-width:250px}
+.oil-editorial .oil-context{margin:0 3.5vw 72px}
+.oil-editorial .oil-context-visuals{display:grid;grid-template-columns:60% 32%;justify-content:space-between;align-items:center;gap:0}
+@media(max-width:1000px) and (min-width:701px){
+ .oil-editorial .oil-introduction{grid-template-columns:38% 52%;padding-bottom:64px}
+ .oil-editorial .oil-spread,.oil-editorial .oil-spread.is-reversed{grid-template-columns:46% 46%;margin-bottom:80px}
+ .oil-editorial .oil-form .oil-visuals{display:flex;flex-direction:column;align-items:stretch;gap:18px}
+ .oil-editorial .oil-form .oil-photo:not(.oil-photo-main){width:72%;align-self:flex-end}
+ .oil-editorial .oil-copy>p,.oil-editorial .oil-section-head p{font-size:16px}
+ .oil-editorial .oil-copy h2,.oil-editorial .oil-section-head h2{font-size:34px}
+ .oil-editorial .oil-technical{margin-bottom:80px}
+ .oil-editorial .oil-blueprint img{max-height:510px}
+ .oil-editorial .oil-photo-prototype{width:70%}
+}
+@media(max-width:700px){
+ .oil-editorial .oil-introduction{display:flex;flex-direction:column-reverse;gap:28px;padding:24px 5vw 54px}
+ .oil-introduction>.project-credits{gap:9px;max-width:34ch}
+ .oil-introduction .project-credit{font-size:14px}
+ .oil-introduction .credit-author{font-size:21px}
+ .oil-editorial .oil-copy h2,.oil-editorial .oil-section-head h2{font-size:34px;line-height:1.06;margin-bottom:20px}
+ .oil-editorial .oil-copy>p{font-size:16px;line-height:1.55;max-width:44ch;margin-bottom:18px}
+ .oil-editorial .oil-copy h3{margin-top:22px}
+ .oil-editorial .oil-spread,.oil-editorial .oil-spread.is-reversed{display:flex;flex-direction:column;align-items:stretch;gap:26px;margin:0 5vw 68px}
+ .oil-editorial .oil-visuals{grid-template-columns:minmax(0,1.3fr) minmax(0,.8fr);gap:12px}
+ .oil-editorial .oil-form .oil-photo-main .image-button{aspect-ratio:4/5}
+ .oil-editorial .oil-form .oil-photo-main img{height:100%;object-fit:cover;object-position:center}
+ .oil-editorial .oil-photo figcaption{font-size:11px;margin-top:8px}
+ .oil-editorial .oil-section-head{display:block;margin-bottom:26px}
+ .oil-editorial .oil-section-head p{font-size:16px;max-width:36ch}
+ .oil-editorial .oil-technical{margin:0 5vw 68px}
+ .oil-editorial .oil-blueprint img{max-height:none}
+ .oil-editorial .oil-document-link{margin-top:12px}
+ .oil-editorial .oil-photo-prototype{width:56%;max-width:210px}
+ .oil-editorial .oil-context{margin:0 5vw 48px}
+ .oil-editorial .oil-context-visuals{display:flex;flex-direction:column;align-items:stretch;gap:26px}
+ .oil-editorial .oil-context-visuals>.oil-photo:last-child{width:72%;align-self:flex-end}
+}
