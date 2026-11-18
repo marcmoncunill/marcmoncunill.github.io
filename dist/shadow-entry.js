@@ -19,8 +19,20 @@
  }
  document.addEventListener('pointerover',onProjectIntent,{passive:true});
  document.addEventListener('focusin',onProjectIntent);
- // Warm local modules during idle time; GPU resources are still created only on entry.
- if('requestIdleCallback' in window)requestIdleCallback(()=>warm().catch(()=>{}),{timeout:1500});
+ // Prepare the real renderer near its link, not while unrelated pages load.
+ // Intent remains immediate; visiting the cover no longer downloads Three.js/CAD.
+ if('IntersectionObserver' in window){
+  const links=new IntersectionObserver(entries=>{
+   if(!entries.some(entry=>entry.isIntersecting))return;
+   links.disconnect();warm().catch(()=>{});
+  },{rootMargin:'400px 0px'});
+  const watchLinks=()=>{
+   links.disconnect();if(componentPromise&&modelsPromise)return;
+   document.querySelectorAll('main a[href="#/project/the-shadow-set"]').forEach(link=>links.observe(link));
+  };
+  new MutationObserver(watchLinks).observe(document.querySelector('main'),{childList:true});
+  watchLinks();
+ }
  async function prepareEntry(article,isCurrent){
   // Measure and render the real scene before the router replaces the old page.
   // Nothing from this temporary host is painted or exposed to assistive tech.

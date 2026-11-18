@@ -25,16 +25,21 @@
 .workshop-learning p{font-size:16px;color:#55554e}
 .workshop-copy .workshop-credit{font-size:12px;line-height:1.45;color:#62625b;margin-top:20px;max-width:44ch}
 .workshop-related{display:inline-flex;align-items:center;gap:5px;min-height:44px;margin-top:14px;font-size:14px;line-height:1.4}
-.workshop-row[data-piece=contrapposto] .workshop-visuals{grid-template-columns:minmax(0,1.25fr) minmax(0,.85fr)}
-.workshop-row[data-piece=contrapposto] .workshop-primary{width:100%;max-width:283px;justify-self:center}
-.workshop-row[data-piece=contrapposto] .workshop-detail{width:100%;max-width:262px;justify-self:center;align-self:end;padding-bottom:34px}
+.workshop-row[data-piece=contrapposto] .workshop-visuals{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.workshop-row[data-piece=contrapposto] .workshop-primary,.workshop-row[data-piece=contrapposto] .workshop-detail{width:100%;max-width:none;justify-self:stretch;align-self:start;padding:0}
+.workshop-row[data-piece=contrapposto] .image-button{aspect-ratio:2/3}
+.workshop-row[data-piece=contrapposto] .image-button img{height:100%;max-height:none;object-fit:cover}
 .workshop-row[data-piece=lip-kit] .workshop-primary .image-button{height:clamp(280px,32vw,440px)}
 .workshop-row[data-piece=lip-kit] .workshop-primary img,.workshop-row[data-piece=lip-kit] .workshop-detail img{height:100%;max-height:none;object-fit:cover;object-position:center}
 .workshop-row[data-piece=lip-kit] .workshop-detail .image-button{height:clamp(220px,24vw,340px)}
 .workshop-row[data-piece=lip-kit] .workshop-detail{align-self:end;padding-bottom:24px}
 .workshop-row[data-piece=kyoto] .workshop-primary .image-button{height:clamp(260px,30vw,420px)}
 .workshop-row[data-piece=kyoto] .workshop-primary img{height:100%;max-height:none;object-fit:cover}
-.workshop-row[data-piece=penjador] .workshop-visuals{grid-template-columns:1fr 1fr}
+.workshop-row[data-piece=penjador] .workshop-visuals{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:center}
+.workshop-row[data-piece=penjador] .workshop-primary{grid-row:1/3}
+.workshop-row[data-piece=penjador] .workshop-primary .image-button{aspect-ratio:4/5}
+.workshop-row[data-piece=penjador] .workshop-primary img{height:100%;max-height:none;object-fit:cover}
+.workshop-row[data-piece=penjador] .workshop-detail{width:80%;justify-self:center;align-self:center}
 .workshop-next{margin-top:16px;padding:44px 3.5vw;display:flex;align-items:center;justify-content:space-between;gap:40px;background:#f6f5f0}
 .workshop-next>span{display:flex;flex-direction:column;gap:14px;max-width:64%}
 .workshop-next-label{font-size:14px;line-height:1.4}
@@ -49,9 +54,10 @@
  .workshop-row.is-reversed{grid-template-columns:46% 46%}
  .workshop-visuals{display:flex;flex-direction:column;gap:18px;align-items:stretch}
  .workshop-visuals .workshop-detail{width:78%;align-self:flex-end}
- .workshop-row[data-piece=contrapposto] .workshop-visuals,.workshop-row[data-piece=lip-kit] .workshop-visuals{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;align-items:center}
+ .workshop-row[data-piece=contrapposto] .workshop-visuals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+ .workshop-row[data-piece=lip-kit] .workshop-visuals{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;align-items:center}
  .workshop-row[data-piece=contrapposto] .workshop-detail,.workshop-row[data-piece=lip-kit] .workshop-detail{width:100%;padding-bottom:0;align-self:center}
- .workshop-row[data-piece=penjador] .workshop-detail{width:90%}
+ .workshop-row[data-piece=penjador] .workshop-detail{width:80%}
  .workshop-copy>p,.workshop-learning p{font-size:16px}
  .workshop-case figcaption{font-size:11px}
 }
@@ -71,13 +77,14 @@
  .workshop-copy>p{font-size:16px;max-width:44ch}
  .workshop-learning{margin-top:20px}
  .workshop-learning p{font-size:16px}
- .workshop-row[data-piece=contrapposto] .workshop-detail{padding-bottom:20px}
+ .workshop-row[data-piece=contrapposto] .workshop-detail{padding:0}
  .workshop-row[data-piece=lip-kit] .workshop-primary .image-button{height:290px}
  .workshop-row[data-piece=lip-kit] .workshop-detail .image-button{height:220px}
  .workshop-row[data-piece=lip-kit] .workshop-detail{padding-bottom:18px}
  .workshop-row[data-piece=kyoto] .workshop-primary .image-button{height:260px}
- .workshop-row[data-piece=penjador] .workshop-visuals{grid-template-columns:minmax(0,1fr) minmax(0,.85fr);gap:10px;align-items:center}
- .workshop-row[data-piece=penjador] .workshop-primary,.workshop-row[data-piece=penjador] .workshop-detail{width:100%;margin:0;padding:0}
+ .workshop-row[data-piece=penjador] .workshop-visuals{gap:10px}
+ .workshop-row[data-piece=penjador] .workshop-primary{width:100%;margin:0;padding:0}
+ .workshop-row[data-piece=penjador] .workshop-detail{width:80%;margin:0;padding:0}
  .workshop-next{padding:32px 5vw;gap:24px}
  .workshop-next>span{max-width:62%;gap:12px}
  .workshop-next strong{font-size:clamp(24px,6.3vw,34px)}

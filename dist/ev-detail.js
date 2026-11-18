@@ -18,7 +18,7 @@
   const manifestRequest=new AbortController();
   let alive=true,enabled=true,mediaFailed=false,manifest=null,tier=null,manifestLoading=false,lastRecovery=0,recoveryTimer=0;
   const media=window.portfolioMotionMedia;
-  let raf=0,shown=0,posterReady=false,cursor=1,lastStamp=0,rawTarget=1,draws=0,drawMs=0,drawMax=0,stageWidth=1;
+  let raf=0,shown=0,posterReady=false,cursor=1,lastStamp=0,rawTarget=1,draws=0,drawMs=0,drawMax=0,stageWidth=1,heldWhite=false;
   const reduced=matchMedia('(prefers-reduced-motion:reduce)');
   const debug=new URLSearchParams(location.search).get('ev-debug')==='on',trace=[];
 
@@ -86,11 +86,13 @@
    const reveal=Math.max(0,Math.min(1,(whiteProgress-.25)/.6));
    article.style.setProperty('--ev-content-reveal',String(reveal*reveal*(3-2*reveal)));
    scene.dataset.whiteProgress=whiteProgress.toFixed(5);
-   stage.style.setProperty('--ev-detail-white',enabled&&progress>=1?'1':'0');
+   if(progress>=1)heldWhite=true;
+   stage.style.setProperty('--ev-detail-white',enabled&&(progress>=1||heldWhite)?'1':'0');
    if(enabled&&progress>=1){header.style.setProperty('--ev-detail-logo-ink','#000');header.style.setProperty('--ev-detail-nav-ink','#000');}
    scene.dataset.progress=progress.toFixed(5);
    const contentTop=scene.nextElementSibling.getBoundingClientRect().top;
    const inScene=rect.top<innerHeight&&rect.bottom>94&&contentTop>94;
+   stream?.active(enabled&&!document.hidden&&rect.top<innerHeight&&rect.bottom>0);
    const light=enabled&&shown>=338;
    stage.classList.toggle('is-light',light);
    header.classList.toggle('is-ev-immersive',inScene);
@@ -106,9 +108,14 @@
     if(rect.bottom<=stage.offsetHeight||progress===0||progress===1)next=rawTarget;
     scene.dataset.rawTargetFrame=String(Math.round(rawTarget));
     const ready=request(Math.max(1,Math.min(manifest.frame_count,Math.round(next))));
-    if(ready)cursor=next;
+    if(ready){cursor=next;if(progress<1){heldWhite=false;stage.style.setProperty('--ev-detail-white','0');}}
     if(ready&&cursor!==rawTarget)schedule();else if(!ready)lastStamp=0;
-   }else lastStamp=0;
+   }else{
+    lastStamp=0;
+    // Returning from the explanation starts at the correct end of the film.
+    // Keep the pure-white handoff until that original frame has decoded.
+    if(manifest){cursor=1+progress*(manifest.frame_count-1);stream?.target(Math.round(cursor));}
+   }
 
   }
   function schedule(){if(alive&&!raf)raf=requestAnimationFrame(update);}
@@ -131,7 +138,7 @@
   }
   function visibility(){
    if(document.hidden){cancelAnimationFrame(raf);raf=0;stream?.active(false);shown=0;}
-   else{stream?.active(true);if(!manifest)loadManifest();fit();schedule();}
+   else{if(!manifest)loadManifest();fit();schedule();}
   }
   function posterLoaded(){
    if(!alive)return;posterReady=true;

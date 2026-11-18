@@ -52,13 +52,18 @@
   function pump(){
    if(!alive||!active||!manifest)return;
    const current=manifest.frames[target].chunk;
-   // Two block downloads, ordered around the playhead. Save-data loads only neighbours.
-   const all=manifest.chunks.map((_,i)=>i);
-   all.sort((a,b)=>a===current?-1:b===current?1:Math.abs(a-current)-Math.abs(b-current)||((b-a)*direction));
+   // Fetch around the playhead, not the entire film on every visit. Keep visited
+   // encoded blocks for reverse scroll, and prepare the next block before its turn.
+   const all=[current,current+direction,current-direction].filter((n,i,a)=>n>=0&&n<manifest.chunks.length&&a.indexOf(n)===i);
+   const wantedChunks=new Set(all);
+   for(const [n,request] of downloads){
+    if(wantedChunks.has(n))continue;
+    request.abort();
+    for(let f=manifest.chunks[n].first;f<=manifest.chunks[n].last;f++)early.delete(f);
+   }
    for(const n of all){
     if(downloads.size>=2)break;
     if(chunks.has(n)||downloads.has(n)||(failed.get('c'+n)||0)>Date.now())continue;
-    if(navigator.connection?.saveData&&Math.abs(n-current)>1)continue;
     const request=new AbortController();downloads.set(n,request);requests++;
     media.read(directory+manifest.chunks[n].file,{signal:request.signal,timeoutMs:30000,consume:r=>receive(r,n,request.signal)})
      .then(blob=>{if(!alive||request.signal.aborted)return;if(blob.size!==manifest.chunks[n].bytes)throw Error('Incomplete frame block');chunks.set(n,blob);encodedBytes+=blob.size;failed.delete('c'+n);for(let f=manifest.chunks[n].first;f<=manifest.chunks[n].last;f++)early.delete(f);})
@@ -93,7 +98,7 @@
   return {
    target(n){n=Math.round(n);if(n===target)return;direction=Math.sign(n-target)||direction;target=n;if(manifest){target=clamp(target);pump();}},
    take(n){const image=decoded.get(n);if(image){shown=n;hits++;}else misses++;return image;},
-   active(value){active=value;if(!active){downloads.forEach(c=>c.abort());early.clear();decoded.forEach(i=>i?.close?.());decoded.clear();}else pump();stats();},
+   active(value){if(active===value)return;active=value;if(!active){downloads.forEach(c=>c.abort());early.clear();decoded.forEach(i=>i?.close?.());decoded.clear();}else pump();stats();},
    destroy(){alive=false;clearTimeout(pumpTimer);clearTimeout(manifestTimer);controller.abort();downloads.forEach(c=>c.abort());downloads.clear();decoded.forEach(i=>i?.close?.());decoded.clear();chunks.clear();early.clear();}
   };
  }

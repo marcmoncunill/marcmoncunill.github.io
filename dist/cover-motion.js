@@ -72,6 +72,8 @@
    if(Math.abs(target-next)<.0001)next=target;
    scene.dataset.targetProgress=target.toFixed(4);
    const inCover=rect.bottom>110&&rect.top<innerHeight;
+   stream.active(!document.hidden&&rect.bottom>0&&rect.top<innerHeight);
+   if(rect.bottom<=0||rect.top>=innerHeight){smoothed=target;lastTime=0;}
    header.classList.toggle('is-cover-mode',inCover);
    if(!inCover)header.classList.remove('is-cover-nav-hidden');
    else if(!shown)paint(smoothed);
@@ -97,7 +99,7 @@
    choice=!enabled;mode();window.scrollTo({top,behavior:'instant'});schedule();
   }
   function resize(){fit();schedule();}
-  function visibility(){stream.active(!document.hidden);if(!document.hidden){shown=0;schedule();}}
+  function visibility(){if(document.hidden)stream.active(false);else{shown=0;schedule();}}
   document.addEventListener('visibilitychange',visibility);
   control.addEventListener('click',toggle);
   window.addEventListener('scroll',schedule,{passive:true});
