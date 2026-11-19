@@ -22,8 +22,9 @@ function focusContent(target=main){
   target.focus({preventScroll:true});
 }
 
+function isAboutHash(hash=location.hash){return hash==='#/sobre-mi'||hash==='#/#about';}
 function sectionFromHash(hash=location.hash){
-  return hash.match(/^#\/#(work|experimentacio|about)$/)?.[1]||null;
+  return hash.match(/^#\/#(work|experimentacio)$/)?.[1]||null;
 }
 
 function scrollToDestination(focus=false,smooth=false){
@@ -38,7 +39,7 @@ function markNavigation(){
   const section=sectionFromHash();
   const experiment=location.hash.startsWith('#/experimentacio/');
   document.querySelectorAll('[data-nav]').forEach(link=>{
-    const active=section===link.dataset.nav||(document.body.classList.contains('project-page')&&link.dataset.nav===(experiment?'experimentacio':'work'));
+    const active=isAboutHash()?link.dataset.nav==='about':section===link.dataset.nav||(document.body.classList.contains('project-page')&&link.dataset.nav===(experiment?'experimentacio':'work'));
     if(active)link.setAttribute('aria-current','location');else link.removeAttribute('aria-current');
   });
 }
@@ -189,7 +190,8 @@ async function render(){
   const id=hash.match(/^#\/(?:project|experimentacio)\/([^/]+)/)?.[1];
   const p=projects.find(item=>item.id===id)||window.portfolioWorkshops?.items.find(item=>item.id===id);
   const isPublication=hash.startsWith('#/experimentacio/nous-materials');
-  const view=isPublication?'publication':p?p.id:'home';
+  const isAbout=isAboutHash(hash);
+  const view=isAbout?'about':isPublication?'publication':p?p.id:'home';
   if(hasRendered&&view===currentView){scrollToDestination(true);markNavigation();scheduleScroll();return;}
   let preparedShadow=null;
   if(p?.id==='the-shadow-set'&&window.portfolioShadowEntry?.prepareEntry){
@@ -205,10 +207,10 @@ async function render(){
   window.portfolioA3Water?.unmount();
   mirrorMotionCleanup?.();mirrorMotionCleanup=null;
   routeAnimation?.cancel();
-  document.body.classList.toggle('project-page',!!p||isPublication);
+  document.body.classList.toggle('project-page',!!p||isPublication||isAbout);
   if(preparedShadow){main.replaceChildren(preparedShadow.article);preparedShadow.host.remove();}
-  else main.innerHTML=isPublication?publication():p?(p.id==='a3-collection'?a3():projectDetail(p,productProjects.indexOf(p))):home();
-  document.title=isPublication?`${publicationTitle} — Marc Moncunill`:p?`${p.title} — Marc Moncunill`:'Marc Moncunill — Product Design Portfolio';
+  else main.innerHTML=isAbout?aboutPage():isPublication?publication():p?(p.id==='a3-collection'?a3():projectDetail(p,productProjects.indexOf(p))):home();
+  document.title=isAbout?'Sobre mi — Marc Moncunill':isPublication?`${publicationTitle} — Marc Moncunill`:p?`${p.title} — Marc Moncunill`:'Marc Moncunill — Product Design Portfolio';
   reserveImageDimensions();setupGravity();window.portfolioCover?.mount();window.portfolioFeatured?.mount();
   if(p?.id==='mirall-fusta')setupMirrorMotion();
   if(p?.id==='the-shadow-set'){showShadowPage(shadowPage);window.portfolioShadowEntry?.mount(preparedShadow);}
