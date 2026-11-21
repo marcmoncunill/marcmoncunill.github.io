@@ -205,6 +205,7 @@ async function render(){
   window.portfolioDock?.unmount();
   window.portfolioShadowEntry?.unmount();
   window.portfolioA3Water?.unmount();
+  window.portfolioGarden?.unmount();
   mirrorMotionCleanup?.();mirrorMotionCleanup=null;
   routeAnimation?.cancel();
   document.body.classList.toggle('project-page',!!p||isPublication||isAbout);
@@ -213,6 +214,7 @@ async function render(){
   document.title=isAbout?'Sobre mi — Marc Moncunill':isPublication?`${publicationTitle} — Marc Moncunill`:p?`${p.title} — Marc Moncunill`:'Marc Moncunill — Product Design Portfolio';
   reserveImageDimensions();setupGravity();window.portfolioCover?.mount();window.portfolioFeatured?.mount();
   if(p?.id==='mirall-fusta')setupMirrorMotion();
+  if(p?.id==='rebrot')window.portfolioGarden?.mount();
   if(p?.id==='the-shadow-set'){showShadowPage(shadowPage);window.portfolioShadowEntry?.mount(preparedShadow);}
   if(isPublication)showPublicationPage(publicationPage);
   scrollToDestination(hasRendered);setupReveals();markNavigation();updateScroll();

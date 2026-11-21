@@ -1,35 +1,27 @@
-/* A long personal essay. Photographs are provisional examples from Marc's selected mockup. */
-.about-page{padding:164px 3.5vw 112px;--about-gap:clamp(76px,9vw,144px)}
-.about-page h1{font-size:clamp(68px,7.8vw,120px);font-weight:450;line-height:.98;letter-spacing:-.055em;margin:0 0 46px}
-.about-page p{font-size:clamp(22px,2.15vw,30px);line-height:1.5;letter-spacing:-.018em;max-width:44ch;margin:0 0 30px;text-wrap:pretty}
+/* One continuous reading column with Marc’s supplied photograph and one provisional image. */
+.about-page{padding:148px 4vw 92px}
+.about-layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:8vw;align-items:start;max-width:1280px;margin:0 auto}
+.about-copy{min-width:0}
+.about-page h1{font-size:clamp(42px,4.6vw,66px);font-weight:450;line-height:1.06;letter-spacing:-.05em;margin:0 0 34px;text-wrap:balance}
+.about-copy p{font-size:clamp(18px,1.35vw,20px);line-height:1.6;letter-spacing:-.012em;margin:0 0 20px;text-wrap:pretty}
+.about-copy p:last-child{margin-bottom:0}
+.about-photos{display:grid;gap:22px;min-width:0;padding-top:5px}
 .about-page figure{margin:0;min-width:0}
 .about-page img{display:block;width:100%;height:auto;border-radius:12px}
-.about-intro{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6vw;align-items:start}
-.about-portrait{position:sticky;top:126px}
-.about-portrait figcaption{font-size:12px;line-height:1.45;color:#62625b;margin-top:12px}
-.about-interests{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:7vw;align-items:center;margin-top:var(--about-gap)}
-.about-interests p{margin:0}
-.about-travel{margin-top:var(--about-gap)!important}
-.about-travel img{aspect-ratio:2.3;object-fit:cover}
-.about-outlook{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:9vw;align-items:center;margin-top:var(--about-gap)}
-.about-outlook p{margin:0}
-.about-outlook figure{width:100%;max-width:560px;justify-self:end}
+.about-photos figure:first-child{width:min(100%,360px);justify-self:end;overflow:hidden;border-radius:12px}
+.about-photos figure:first-child img{aspect-ratio:3/4;object-fit:contain;transform:scale(1.055);transform-origin:50% 40%}
+.about-photos figure:nth-child(2) img{aspect-ratio:1.7;object-fit:cover}
+.about-photo-note{font-size:12px;line-height:1.45;color:#62625b;margin:-10px 0 0}
 @media(max-width:1000px) and (min-width:701px){
- .about-page{padding-top:142px}
- .about-page h1{font-size:72px;margin-bottom:34px}
- .about-intro{gap:5vw}
- .about-page p{font-size:22px;line-height:1.5}
- .about-interests{gap:5vw;grid-template-columns:1fr 1fr}
- .about-outlook{gap:6vw}
+ .about-page{padding-top:136px}
+ .about-layout{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:5vw}
+ .about-page h1{font-size:44px;margin-bottom:28px}
 }
 @media(max-width:700px){
- .about-page{padding:120px 5vw 70px;--about-gap:60px}
- .about-page h1{font-size:clamp(60px,16vw,84px);margin-bottom:32px}
- .about-page p{font-size:21px;line-height:1.5;margin-bottom:26px;max-width:100%}
- .about-intro{grid-template-columns:minmax(0,1fr);gap:22px}
- .about-portrait{position:static;max-width:520px}
- .about-interests,.about-outlook{grid-template-columns:minmax(0,1fr);gap:30px}
- .about-interests p,.about-outlook p{margin:0}
- .about-travel img{aspect-ratio:1.65;object-position:40% 50%}
- .about-outlook figure{max-width:520px;justify-self:start}
+ .about-page{padding:116px 5vw 64px}
+ .about-layout{grid-template-columns:minmax(0,1fr);gap:32px}
+ .about-page h1{font-size:clamp(36px,9vw,50px);margin-bottom:28px}
+ .about-copy p{font-size:18px;line-height:1.6;margin-bottom:20px}
+ .about-photos{grid-template-columns:1fr 1fr;gap:16px;padding-top:0;align-items:start}
+ .about-photo-note{grid-column:1/-1;margin:0}
 }

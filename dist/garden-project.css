@@ -1,0 +1,55 @@
+/* Rebrot: title and explanation first, a bounded portrait film alongside, then two stills and drawings. */
+.project.garden-case{padding:142px 0 0}
+.garden-intro{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:9vw;align-items:start;padding:0 3.5vw 84px;max-width:1500px;margin-inline:auto}
+.garden-intro-copy,.garden-copy{min-width:0}
+.garden-back{display:inline-block;font-size:13px;line-height:1.4;margin-bottom:30px}
+.garden-back:hover{text-decoration:underline;text-underline-offset:4px}
+.garden-intro h1{font-size:clamp(64px,6.5vw,100px);font-weight:450;line-height:1;letter-spacing:-.055em;margin:0 0 14px}
+.garden-subtitle{font-size:20px;line-height:1.4;margin:0 0 32px}
+.garden-copy p{font-size:18px;line-height:1.55;max-width:52ch;margin:0 0 20px}
+.garden-copy p:last-child{margin-bottom:0}
+.garden-copy .garden-deck{font-size:clamp(25px,2.1vw,31px);font-weight:400;line-height:1.22;letter-spacing:-.025em;margin:0 0 26px;max-width:29ch}
+.garden-author{font-size:13px;line-height:1.5;margin:28px 0 0;color:#62625b}
+.garden-film{position:relative;width:100%;max-width:420px;justify-self:end;margin:0;aspect-ratio:3/4;background:#e6e4df;border-radius:12px;overflow:hidden}
+.garden-film video{display:block;width:100%;height:100%;object-fit:contain;aspect-ratio:3/4}
+.garden-film-status{position:absolute;left:12px;bottom:12px;right:12px;padding:12px;background:#f6f5f0;font-size:13px;line-height:1.5}
+.garden-film-status[hidden]{display:none}
+.garden-film-status button{border:0;padding:0;background:transparent;text-decoration:underline;text-underline-offset:3px}
+.garden-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;padding:0 3.5vw 96px}
+.garden-gallery figure{margin:0;min-width:0}
+.garden-gallery .image-button{display:block;width:100%}
+.garden-gallery img{width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;border-radius:12px}
+.garden-caption{font-size:12px;line-height:1.5;color:#62625b;margin-top:12px}
+.garden-plans{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:7vw;align-items:center;padding:0 3.5vw 86px}
+.garden-plans h2{font-size:clamp(32px,3.4vw,52px);font-weight:450;letter-spacing:-.04em;line-height:1.06;margin:0 0 26px}
+.garden-plan-visual{min-width:0;margin:0}
+.garden-plan-visual .image-button{display:block;width:100%;background:transparent}
+.garden-plan-visual img{display:block;width:100%;height:auto;max-height:580px;object-fit:contain;mix-blend-mode:multiply}
+.garden-plan-visual .garden-caption{text-align:center}
+.garden-plans-link{margin-top:12px}
+.garden-copy .garden-pdf-note{font-size:12px;color:#62625b;margin:12px 0 0}
+.garden-credits{font-size:12px;line-height:1.5;padding:0 3.5vw;margin:0 0 54px;color:#62625b}
+.garden-credits a{text-decoration:underline;text-underline-offset:3px}
+@media(max-width:1000px) and (min-width:701px){
+ .project.garden-case{padding-top:132px}
+ .garden-intro{gap:5vw;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);padding-bottom:68px}
+ .garden-intro h1{font-size:64px}
+ .garden-copy p{font-size:17px}
+ .garden-plans{gap:5vw;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)}
+}
+@media(max-width:700px){
+ .project.garden-case{padding-top:112px}
+ .garden-intro{grid-template-columns:1fr;gap:34px;padding:0 5vw 54px}
+ .garden-back{margin-bottom:26px}
+ .garden-intro h1{font-size:clamp(60px,16vw,82px)}
+ .garden-subtitle{font-size:18px;margin-bottom:28px}
+ .garden-author{font-size:12px;margin-top:22px}
+ .garden-copy p{font-size:16px;line-height:1.6}
+ .garden-copy .garden-deck{font-size:26px;line-height:1.22;margin-bottom:22px}
+ .garden-film{max-width:320px;justify-self:center}
+ .garden-gallery{grid-template-columns:1fr;gap:28px;padding:0 5vw 60px}
+ .garden-plans{grid-template-columns:1fr;gap:32px;padding:0 5vw 54px}
+ .garden-plans h2{font-size:36px;margin-bottom:22px}
+ .garden-plan-visual img{max-height:none}
+ .garden-credits{padding-inline:5vw;margin-bottom:40px}
+}
